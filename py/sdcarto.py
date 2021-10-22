@@ -100,12 +100,24 @@ class SDCarto(GeoAxes):
         gl.yformatter = LATITUDE_FORMATTER
         return
     
+    def enum(self, bounds=[-120, -70, 25, 70], text_coord=False, dtype=None):
+        if bounds is not None: self.set_extent(bounds)
+        if text_coord: 
+            if self.coords == "geo": self.text(1.05, 0.7, "Geographic Coordinates", horizontalalignment="center",
+                                               verticalalignment="center", transform=self.transAxes, rotation=90)
+        self.text(0.1, 1.02, "Rad: "+self.rad, horizontalalignment="center",
+                verticalalignment="center", transform=self.transAxes)
+        if dtype is not None: self.text(1.03, 0.1, dtype, ha="center", va="center", transform=self.transAxes, rotation=90)
+        if self.plot_date: self.text(0.75, 1.02, self.plot_date.strftime("%Y-%m-%d %H:%M") + " UT", horizontalalignment="center",
+                verticalalignment="center", transform=self.transAxes)
+        return
+    
     def add_dn_terminator(self, **kwargs):
         """ Adding day night terminator """
         from cartopy.feature.nightshade import Nightshade
         if self.plot_date:
             ns_feature = Nightshade(self.plot_date, alpha=0.2)
-            super().add_feature(feature, **kwargs)
+            super().add_feature(ns_feature, **kwargs)
         return
     
     def get_aacgm_geom(self, feature, out_height=300. ):
@@ -118,22 +130,42 @@ class SDCarto(GeoAxes):
             for _ni, _list in enumerate(geo_coords):
                 mlon_check_jump_list = []
                 split_mag_list = None
-                if len(_list) == 1:
-                    _loop_list = _list[0]
-                else:
-                    _loop_list = _list
-                for _ngc, _gc in enumerate(_loop_list):
-                    _mc = aacgmv2.get_aacgm_coord(_gc[1], _gc[0], out_height, self.plot_date)
-                    if numpy.isnan(_mc[0]):
-                        continue 
+                if len(_list) == 2:
+                    _mc = aacgmv2.get_aacgm_coord(_list[1], _list[0], out_height, self.plot_date)
+                    if numpy.isnan(_mc[0]): continue
                     mlon_check_jump_list.append( _mc[1] )
-                    if self.coords == "aacgmv2":
-                        mag_list.append( (_mc[1], _mc[0]) )
+                    if self.coords == "aacgmv2": mag_list.append( (_mc[1], _mc[0]) )
                     else:
-                        if _mc[2]*15. > 180.:
-                            mag_list.append( (_mc[2]*15.-360., _mc[0]) )
+                        if _mc[2]*15. > 180.: mag_list.append( (_mc[2]*15.-360., _mc[0]) )
+                        else: mag_list.append( (_mc[2]*15., _mc[0]) )
+                elif len(_list) > 2:
+                    for _ngc, _gc in enumerate(_list):
+                        _mc = aacgmv2.get_aacgm_coord(_gc[1], _gc[0], out_height, self.plot_date)
+                        if numpy.isnan(_mc[0]): continue
+                        mlon_check_jump_list.append( _mc[1] )
+                        if self.coords == "aacgmv2": mag_list.append( (_mc[1], _mc[0]) )
                         else:
-                            mag_list.append( (_mc[2]*15., _mc[0]) )
+                            if _mc[2]*15. > 180.: mag_list.append( (_mc[2]*15.-360., _mc[0]) )
+                            else: mag_list.append( (_mc[2]*15., _mc[0]) )
+                #print(_list)
+                #if len(_list) == 1:
+                #    _loop_list = _list[0]
+                #else:
+                #    _loop_list = _list
+                #for _ngc, _gc in enumerate(_loop_list):
+                #    print(_loop_list, _ngc, _gc)
+                #    _mc = aacgmv2.get_aacgm_coord(_gc[1], _gc[0], out_height, self.plot_date)
+                #    if numpy.isnan(_mc[0]):
+                #        continue 
+                #    mlon_check_jump_list.append( _mc[1] )
+                #    if self.coords == "aacgmv2":
+                #        mag_list.append( (_mc[1], _mc[0]) )
+                #    else:
+                #        if _mc[2]*15. > 180.:
+                #            mag_list.append( (_mc[2]*15.-360., _mc[0]) )
+                #        else:
+                #            mag_list.append( (_mc[2]*15., _mc[0]) )
+                
                 # check for unwanted jumps
                 mlon_check_jump_list = numpy.array( mlon_check_jump_list )
 
