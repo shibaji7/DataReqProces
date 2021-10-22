@@ -1,0 +1,12 @@
+{
+    "file_type": "map2",
+    "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}.{file_type}.bz2",
+    "hemi": "north",
+    "scalers": ["pot.drop"],
+    "vectors": [],
+    "pev_params": ["pot"],
+    "grid_params": {},
+    "file_name_format": "{start}_{end}_{pev_params}_{hemi}.nc",
+    "cores": 24,
+    "pot_lat_min": 30
+}

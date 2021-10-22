@@ -1,0 +1,21 @@
+{
+    "file_type": "cnvmap",
+    "filestr": "/sd-data/{year}/map/{hemi}/{date}.{hemi}.{file_type}.s.bz2",
+    "hemi": "north",
+    "scalers": [],
+    "vectors": [],
+    "pev_params": ["pot", "efield", "vel"],
+    "grid_params": {
+        "summary": ["stid", "channel", "nvec", "freq", "major.revision", "minor.revision",
+                    "program.id", "noise.mean", "noise.sd", "gsct", "v.min", "v.max", "p.min",
+                    "p.max", "w.min", "w.max", "ve.min", "ve.max"],
+        "records": ["vector.mlat", "vector.mlon", "vector.kvect", "vector.stid", "vector.channel",
+                    "vector.index", "vector.vel.median", "vector.vel.sd", "vector.pwr.median", 
+                    "vector.pwr.sd", "vector.wdt.median", "vector.wdt.sd"],
+        "records_map": ["mlat", "mlon", "kvect", "stid", "channel", "index", "vel.median", "vel.sd",
+                        "pwr.median", "pwr.sd", "wdt.median", "wdt.sd"]
+    },
+    "file_name_format": "{start}_{end}_{pev_params}_{hemi}.nc",
+    "cores": 24,
+    "pot_lat_min": 30
+}

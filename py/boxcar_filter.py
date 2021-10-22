@@ -21,7 +21,7 @@ import pandas as pd
 import multiprocessing as mp
 from functools import partial
 
-from get_sd_data import Gate, Beam, Scan, FetchData
+from get_fit_data import Gate, Beam, Scan, FetchData
 import fit_utils
 
 def create_gaussian_weights(mu, sigma, _kernel=3, base_w=5):
