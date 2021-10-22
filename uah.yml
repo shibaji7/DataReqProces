@@ -10,17 +10,20 @@ dependencies:
   - bottleneck=1.3.2=py38h6c62de6_4
   - bzip2=1.0.8=h7b6447c_0
   - ca-certificates=2021.10.8=ha878542_0
+  - cartopy=0.18.0=py38h0d9ca2b_1
   - certifi=2021.10.8=py38h578d9bd_0
   - cftime=1.2.1=py38heb32a55_0
   - click=8.0.3=py38h578d9bd_0
   - cloudpickle=2.0.0=pyhd8ed1ab_0
   - curl=7.71.1=hbc83047_1
+  - cycler=0.10.0=py_2
   - cytoolz=0.11.0=py38h497a2fe_3
   - dask=2021.9.1=pyhd8ed1ab_0
   - dask-core=2021.9.1=pyhd8ed1ab_0
   - distributed=2021.9.1=py38h578d9bd_0
   - freetype=2.10.4=h0708190_1
   - fsspec=2021.10.1=pyhd8ed1ab_0
+  - geos=3.8.0=he6710b0_0
   - hdf4=4.2.13=h3ca952b_2
   - hdf5=1.10.4=hb1b8bf9_0
   - heapdict=1.0.1=py_0
@@ -49,6 +52,7 @@ dependencies:
   - locket=0.2.0=py_2
   - lz4-c=1.9.3=h9c3ff4c_1
   - markupsafe=2.0.1=py38h497a2fe_0
+  - matplotlib-base=3.4.3=py38hf4fb855_0
   - msgpack-python=1.0.2=py38h1fd1430_1
   - ncurses=6.2=h58526e2_4
   - netcdf4=1.5.3=py38hbf33ddf_0
@@ -58,13 +62,16 @@ dependencies:
   - packaging=21.0=pyhd8ed1ab_0
   - partd=1.2.0=pyhd8ed1ab_0
   - pip=21.2.4=pyhd8ed1ab_0
+  - proj=6.2.1=hc80f0dc_0
   - psutil=5.8.0=py38h497a2fe_1
   - pyparsing=2.4.7=pyh9f0ad1d_0
+  - pyshp=2.1.3=pyh44b312d_0
   - python=3.8.10=h49503c6_1_cpython
   - python-dateutil=2.8.2=pyhd8ed1ab_0
   - python_abi=3.8=2_cp38
   - readline=8.1=h46c0cb4_0
   - setuptools=49.6.0=py38h578d9bd_3
+  - shapely=1.7.1=py38h1728cc4_0
   - six=1.16.0=pyh6c4a22f_0
   - sortedcontainers=2.4.0=pyhd8ed1ab_0
   - sqlite=3.36.0=h9cd32fc_0
@@ -82,11 +89,10 @@ dependencies:
   - zstd=1.4.9=ha95c52a_0
   - pip:
     - aacgmv2==2.6.2
-    - cycler==0.10.0
     - deepdish==0.3.6
+    - descartes==1.1.0
     - h5py==3.3.0
     - kiwisolver==1.3.1
-    - matplotlib==3.4.3
     - numexpr==2.7.3
     - pandas==1.3.2
     - pathlib2==2.3.6
