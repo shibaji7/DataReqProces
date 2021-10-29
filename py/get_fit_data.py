@@ -393,6 +393,29 @@ def beam_summary(rad, start, end):
         start=start.strftime("%H%M"), end=end.strftime("%H%M")), header=True, index=False)
     return {"s_time": dur, "t_beam": themis}
 
+def txt2csv(fname="tmp/pot_1635268136.txt", linestart=13):
+    """
+    Convert potential data to csv for plotting.
+    """
+    o = []
+    with open(fname, "r") as f: lines = f.readlines()[linestart:]
+    for l in lines:
+        l = list(filter(None, l.split(" ")))
+        d = l[9].replace("\n", "")
+        x = dict(
+            mlat = float(l[2]),
+            mlon = float(l[3]),
+            EField_north = float(l[4]),
+            EField_east = float(l[5]),
+            Fitted_Vel_North = float(l[6]),
+            Fitted_Vel_East = float(l[7]),
+            Potential = float(l[8]),
+            date = dt.datetime.strptime(d, "%Y-%m-%d/%H:%M:%S")
+        )
+        o.append(x)
+    o = pd.DataFrame.from_records(o)
+    return o
+
 if __name__ == "__main__":
     fdata = FetchData( "sas", [dt.datetime(2015,3,17,3),
         dt.datetime(2015,3,17,3,20)] )

@@ -25,10 +25,38 @@ import datetime as dt
 import argparse
 from dateutil import parser as prs
 import numpy as np
+import aacgmv2
+
+from get_fit_data import txt2csv
 
 import cartopy.crs as ccrs
 import cartopy
 import sdcarto
+
+import matplotlib.ticker as mticker
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+
+def get_gridded_parameters(q, xparam, yparam, zparam, r=0, rounding=False):
+    """
+    Method convert dataframe to 2D array.
+    """
+    plotParamDF = q[ [xparam, yparam, zparam] ]
+    if rounding:
+        plotParamDF.loc[:, xparam] = np.round(plotParamDF[xparam].tolist(), r)
+        plotParamDF.loc[:, yparam] = np.round(plotParamDF[yparam].tolist(), r)
+    else:
+        plotParamDF[xparam] = plotParamDF[xparam].tolist()
+        plotParamDF[yparam] = plotParamDF[yparam].tolist()
+    plotParamDF = plotParamDF.groupby( [xparam, yparam] ).mean().reset_index()
+    plotParamDF = plotParamDF[ [xparam, yparam, zparam] ].pivot( xparam, yparam )
+    x = plotParamDF.index.values
+    y = plotParamDF.columns.levels[1].values
+    X, Y  = np.meshgrid( x, y )
+    # Mask the nan values! pcolormesh can't handle them well!
+    Z = np.ma.masked_where(
+            np.isnan(plotParamDF[zparam].values),
+            plotParamDF[zparam].values)
+    return X,Y,Z.T
 
 def _add_colorbar(fig, ax, bounds, colormap, label=""):
     """
@@ -36,7 +64,7 @@ def _add_colorbar(fig, ax, bounds, colormap, label=""):
     """
     import matplotlib as mpl
     pos = ax.get_position()
-    cpos = [pos.x1 + 0.025, pos.y0 + 0.0125,
+    cpos = [pos.x1 + 0.06, pos.y0 + 0.0125,
             0.015, pos.height * 0.5]                # this list defines (left, bottom, width, height
     cax = fig.add_axes(cpos)
     norm = matplotlib.colors.BoundaryNorm(bounds, colormap.N)
@@ -58,33 +86,47 @@ def plot_map_grid_level_data(args):
     t_id = stime.index(args.sdate)
     for p in args.plot_types:
         geodetic = ccrs.Geodetic()
-        orthographic = ccrs.Orthographic(-90, 90)
-        fig = plt.figure(dpi=150, figsize=(3,3))
+        orthographic = ccrs.NorthPolarStereo()
+        fig = plt.figure(dpi=150, figsize=(4,4))
         ax = fig.add_subplot(111, projection="sdcarto",\
                              map_projection = orthographic,\
-                             coords="geo", plot_date=args.sdate)
-        ax.coastlines()
-        ax.add_dn_terminator()
-        ax.grid_on(draw_labels=[False, False, True, True])
+                             coords=args.coords, plot_date=args.sdate)
+        ax.overaly_coast_lakes()
+        
+        # plot set the map bounds
+        ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
         if p == "pot":
+            o = txt2csv()
+            mlat, mlon, mpot = get_gridded_parameters(o, "mlat", "mlon", "Potential")
             lat, lon = ds.coords["lat_pot"].values, ds.coords["lon_pot"].values
             pot = ds.data_vars["pot_arr"].values[t_id,:,:]
-            pot[pot==0]=np.nan
+            #pot, lat, lon = np.copy(mpot), np.copy(mlat), np.copy(mlon)
             bounds = np.linspace(int(np.rint(np.nanmin(pot))/10)*10, int(np.rint(np.nanmax(pot))/10)*10, 11)
-            cmap = matplotlib.cm.get_cmap("Spectral")
+            cmap = matplotlib.cm.get_cmap("jet")
             cmap.set_bad("w", alpha=0.0)
             norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
             XYZ = orthographic.transform_points(geodetic, lon, lat)
             ax.contourf(XYZ[:,:,0], XYZ[:,:,1], pot, cmap=cmap, vmax=np.rint(np.nanmax(pot)), 
                         vmin=np.rint(np.nanmin(pot)), transform=orthographic, alpha=0.8)
-            ax.set_global()
-            #ax.set_extent([-180,180,0,90], crs=orthographic)
             _add_colorbar(fig, ax, bounds, cmap, r"Potential ($\Phi_{pc}$), Volts")
-            ax.text(0.01, 1.05, "Date: "+args.sdate.strftime("%Y-%m-%d")+"\n"+\
+            ax.text(0.01, 1.1, "Date: "+args.sdate.strftime("%Y-%m-%d")+"\n"+\
                     "Time: %s UT"%(args.sdate.strftime("%H:%M")+"-"+(args.sdate+dt.timedelta(minutes=2)).strftime("%H:%M")),
                     ha="left", va="center", transform=ax.transAxes)
-            ax.text(0.99, 1.05, "Coords: Geographic", ha="right", va="center", transform=ax.transAxes)
-        fig.savefig("tmp/%s-%s.%s.png"%(args.sdate.strftime("%Y%m%dT%H%M"), args.edate.strftime("%H%M"), p))
+            ax.text(0.99, 1.1, "Coords: $%s$"%args.coords, ha="right", va="center", transform=ax.transAxes)
+        plt_lons = np.arange( 0, 361, 30 )
+        mark_lons = np.arange( 0, 360, 30 )
+        plt_lats = np.arange(30,90,10)
+        gl = ax.gridlines(crs=cartopy.crs.Geodetic(), linewidth=0.5)
+        gl.xlocator = mticker.FixedLocator(plt_lons)
+        gl.ylocator = mticker.FixedLocator(plt_lats)
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+        gl.n_steps = 90
+        # mark the longitudes
+        ax.mark_latitudes(plt_lats, fontsize=10, color="r")
+        ax.mark_longitudes(lon_arr=mark_lons, fontsize=10, color="darkblue")
+        fname = "tmp/%s.%s.png"%(args.sdate.strftime("%Y%m%dT%H%M"), p)
+        fig.savefig(fname)
         plt.close()
     return
 
@@ -94,6 +136,7 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--sdate", default=dt.datetime(2011,10,11,12), help="Start date to plot", type=prs.parse)
     parser.add_argument("-e", "--edate", default=dt.datetime(2011,10,11,15), help="End date to plot", type=prs.parse)
     parser.add_argument("-p", "--plot_type", default="pot", help="Plot types", type=str)
+    parser.add_argument("-c", "--coords", default="aacgmv2_mlt", help="Coordinate types [aacgmv2, aacgmv2_mlt]", type=str)
     args = parser.parse_args()
     args.plot_types = args.plot_type.split(",")
     for k in vars(args).keys():

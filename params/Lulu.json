@@ -2,7 +2,7 @@
     "file_type": "map2",
     "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}.{file_type}.bz2",
     "hemi": "north",
-    "scalers": ["pot.drop"],
+    "scalers": [],
     "vectors": [],
     "pev_params": ["pot"],
     "grid_params": {},
