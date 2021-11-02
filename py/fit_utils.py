@@ -174,3 +174,26 @@ def save_to_netcdf(fname, scans, th=np.nan):
             tmp[:] = np.array(_vector[k])
         rootgrp.close()
     return
+
+def update_geo_location(rad, o):
+    import rad_fov
+    hdw = pydarn.read_hdw_file(rad)
+    sgate = 0
+    egate = hdw.gates
+    sbeams, ebeam = 0, hdw.beams
+    rfov = rad_fov.CalcFov(hdw=hdw, ngates=egate)
+    glat, glon = [], []
+    for i, rec in o.iterrows():
+        glat, glon = rfov.latFull[rec["bmnum"], rec["slist"]], rfov.lonFull[rec["bmnum"], rec["slist"]]
+    o["glat"], o["glon"] = glat, glon
+    return o
+
+def get_geo_location(rad):
+    import rad_fov
+    hdw = pydarn.read_hdw_file(rad)
+    sgate = 0
+    egate = hdw.gates
+    sbeams, ebeam = 0, hdw.beams
+    rfov = rad_fov.CalcFov(hdw=hdw, ngates=egate)
+    glat, glon = rfov.latFull, rfov.lonFull
+    return glat, glon

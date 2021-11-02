@@ -339,6 +339,13 @@ class FetchData(object):
             for p in s_params:
                 _o[p].extend([getattr(b, p)])
         return pd.DataFrame.from_records(_o)
+    
+    def to_xarray(self, scans):
+        ngates = 110
+        nbeams = len(scans[0].beams)
+        ntimes = len(scans)
+        
+        return
 
     def fetch_data(self, s_params=["bmnum", "noise.sky", "tfreq", "scan", "nrang", "intt.sc", "intt.us",\
             "mppul", "nrang", "rsep", "cp", "frang", "smsep", "lagfr", "channel", "bmazm"],
@@ -393,7 +400,7 @@ def beam_summary(rad, start, end):
         start=start.strftime("%H%M"), end=end.strftime("%H%M")), header=True, index=False)
     return {"s_time": dur, "t_beam": themis}
 
-def txt2csv(fname="tmp/pot_1635268136.txt", linestart=13):
+def txt2csv(fname="tmp/pot.txt", linestart=13):
     """
     Convert potential data to csv for plotting.
     """

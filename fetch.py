@@ -22,22 +22,34 @@ from fetch_data import fetch_fit_level_data, fetch_map_level_data
 
 def load_param_json(param_file_name):
     print(f" Read param file params/{param_file_name}.json")
-    with open("params/%s.json"%param_file_name, "r") as f: j = json.loads("\n".join(f.readlines()))
-    return j
+    with open("params/%s.json"%param_file_name, "r") as f: o = json.loads("\n".join(f.readlines()))
+    # Set datetime objects from json
+    if o["start_date"] is not None: o["start_date"] = prs.parse(o["start_date"])
+    if o["end_date"] is not None: o["end_date"] = prs.parse(o["end_date"])
+    if (o["dates"] is not None) and (len(o["dates"]) > 0): o["dates"] = [prs.parse(d) for d in o["dates"]]
+    # Set save file type
+    if ".nc" in o["file_name_format"]: o["save_type"] = "netCDF4"
+    elif ".csv" in o["file_name_format"]: o["save_type"] = "pandas"
+    # Set median filter
+    o["boxcar"] = True if ("med_filt" in o.keys()) and ("thresh" in o["med_filt"].keys())\
+            and (o["med_filt"]["thresh"] is not None) else False
+    return o
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--start", default=dt.datetime(2011,10,11,12), help="Start date", type=prs.parse)
-    parser.add_argument("-e", "--end", default=dt.datetime(2011,10,11,15), help="End date", type=prs.parse)
+    parser.add_argument("-s", "--start", default=None, help="Start date", type=prs.parse)
+    parser.add_argument("-e", "--end", default=None, help="End date", type=prs.parse)
     parser.add_argument("-r", "--rad", default="gbr", help="Radar code", type=str)
+    parser.add_argument("-f", "--file_type", default=None, help="File type other than fitacf or map2", type=str)
     parser.add_argument("-pm", "--param_file_name", default="Lulu", help="Parameter file name", type=str)
     parser.add_argument("-tmp", "--tmp_folder", default="tmp/", help="Local folder to save files", type=str)
     args = parser.parse_args()
-    j = load_param_json(args.param_file_name)
-    args.file_type = j["file_type"]
-    args.file_name_format = j["file_name_format"]
+    o = load_param_json(args.param_file_name)
+    args.file_type = o["data_type"] if args.file_type is None else args.file_type
+    for k in list(o.keys()):
+        setattr(args, k, o[k])
     for k in vars(args).keys():
         print("     " + k + "->" + str(vars(args)[k]))
-    if args.file_type in ["fit", "fitacf"]: fetch_fit_level_data(args)
-    if args.file_type in ["map2", "mapex", "cnvmap"]: fetch_map_level_data(args)
+    if args.data_type in ["fitacf"]: fetch_fit_level_data(args)
+    elif args.data_type in ["map", "grid"]: fetch_map_level_data(args)
     os.system("rm -rf .empty __pycache__")

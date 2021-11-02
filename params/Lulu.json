@@ -1,12 +1,18 @@
 {
-    "file_type": "map2",
-    "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}.{file_type}.bz2",
-    "hemi": "north",
+    "data_type": "map",
+    "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
+    "start_date": "2011-10-11T13:34",
+    "end_date": "2011-10-11T13:40",
+    "dates": [],
+    "hemis": ["north"],
     "scalers": [],
     "vectors": [],
     "pev_params": ["pot"],
     "grid_params": {},
-    "file_name_format": "{start}_{end}_{pev_params}_{hemi}.nc",
+    "file_name_format": "{dn}.{hemi}.nc",
     "cores": 24,
-    "pot_lat_min": 30
+    "pot_lat_min": 50,
+    "med_filt": {
+        "thresh": null
+    }
 }

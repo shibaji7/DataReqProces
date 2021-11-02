@@ -1,23 +1,20 @@
 {
-    "file_type": "fitacf",
-    "keys": ["time", "bmnum", "gflg", "noise.sky", "nrang", "p_l", "scan", "slist", "tfreq", "v", "w_l"],
-    "desc": {
-        "time": "Datetime of the observation (U: datetime)",
-        "bmnum": "Beam number (U: 1)",
-        "slist": "Range gate (U: 1)",
-        "v": "LoS Doppler Velocity (U: m/s)",
-        "w_l": "Spectral width (U: m/s)",
-        "gflg": "Ground scatter flag (U: 1)",
-        "noise.sky": "Sky noise (U: 1)",
-        "nrang": "Number of range gates (U: 1)",
-        "p_l": "Power (U: dB)",
-        "scan": "Scan flag (U: 1)",
-        "tfreq": "Operating frequency (U: kHz)"
+    "data_type": "fitacf",
+    "start_date": "2010-12-12T12",
+    "end_date": "2010-12-13",
+    "dates": [],
+    "hemis": ["north"],
+    "scalers": ["time", "bmnum", "noise.sky", "nrang", "tfreq", "scan"],
+    "vectors": ["p_l", "slist", "v", "w_l", "gflg"],
+    "pev_params": [],
+    "grid_params": {
+        "summary": [],
+        "records": [],
+        "records_map": []
     },
     "file_name_format": "{rad}_{start}_{end}.csv",
-    "print_desc": true,
+    "cores": 24,
     "med_filt": {
-        "thresh": 0.4,
-        "cores": 24
+        "thresh": null
     }
 }

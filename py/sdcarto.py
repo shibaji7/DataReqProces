@@ -200,7 +200,7 @@ class SDCarto(GeoAxes):
             xy = line_constructor(t, 30, plot_extent)
             # print(xy)
             proj_xyz = self.projection.transform_points(\
-                            cartopy.crs.PlateCarree(), xy[:, 0], xy[:, 1]\
+                            cartopy.crs.Geodetic(), xy[:, 0], xy[:, 1]\
                             )
             xyt = proj_xyz[..., :2]
             ls = LineString(xyt.tolist())

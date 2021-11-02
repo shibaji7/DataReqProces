@@ -25,6 +25,7 @@ import datetime as dt
 import argparse
 from dateutil import parser as prs
 import numpy as np
+import pandas as pd
 import aacgmv2
 
 from get_fit_data import txt2csv
@@ -76,6 +77,37 @@ def _add_colorbar(fig, ax, bounds, colormap, label=""):
     cb2.set_label(label)
     return
 
+def add_axes(fig, num, proj, coords, date, vlim, nlim, ty):
+    ax = fig.add_subplot(num, projection="sdcarto",\
+                         map_projection = proj,\
+                         coords=coords, plot_date=date)
+    ax.overaly_coast_lakes()
+    ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
+    
+    bounds = np.linspace(vlim[0], vlim[1], nlim)
+    cmap = matplotlib.cm.get_cmap("jet")
+    cmap.set_bad("w", alpha=0.0)
+    norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+    
+    plt_lons = np.arange( 0, 360, 30 )
+    mark_lons = np.arange( 0, 360, 30 )
+    plt_lats = np.arange(30,90,10)
+    gl = ax.gridlines(crs=cartopy.crs.Geodetic(), linewidth=0.5)
+    gl.xlocator = mticker.FixedLocator(plt_lons)
+    gl.ylocator = mticker.FixedLocator(plt_lats)
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+    gl.n_steps = 90
+    ax.mark_latitudes(plt_lats, fontsize=10, color="r")
+    ax.mark_longitudes(plt_lons, fontsize=10, color="darkblue")
+    
+    ax.text(0.01, 1.1, "Date: "+date.strftime("%Y-%m-%d")+"\n"+\
+             "Time: %s UT"%(args.sdate.strftime("%H:%M")+"-"+(date+dt.timedelta(minutes=2)).strftime("%H:%M")),
+             ha="left", va="center", transform=ax.transAxes)
+    ax.text(0.99, 1.1, "Coords: $%s$"%coords.replace("_", "-"), ha="right", va="center", transform=ax.transAxes)
+    ax.text(1.05, 0.99, ty, ha="center", va="top", transform=ax.transAxes)
+    return ax, bounds, norm, cmap
+
 def plot_map_grid_level_data(args):
     print(f" Plot operations- {args.plot_type}")
     ds = xarray.open_dataset(args.nc_file)
@@ -84,47 +116,33 @@ def plot_map_grid_level_data(args):
     etime = [dt.datetime.utcfromtimestamp( (d - np.datetime64("1970-01-01T00:00:00Z","s")) / np.timedelta64(1, "s"))
             for d in ds.coords["stime"].values]
     t_id = stime.index(args.sdate)
-    for p in args.plot_types:
-        geodetic = ccrs.Geodetic()
-        orthographic = ccrs.NorthPolarStereo()
-        fig = plt.figure(dpi=150, figsize=(4,4))
-        ax = fig.add_subplot(111, projection="sdcarto",\
-                             map_projection = orthographic,\
-                             coords=args.coords, plot_date=args.sdate)
-        ax.overaly_coast_lakes()
-        
-        # plot set the map bounds
-        ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
+    geodetic = ccrs.Geodetic()
+    orthographic = ccrs.NorthPolarStereo()
+    for p in args.plot_types:    
         if p == "pot":
-            o = txt2csv()
-            mlat, mlon, mpot = get_gridded_parameters(o, "mlat", "mlon", "Potential")
+            if args.comp is not None: 
+                fig = plt.figure(dpi=150, figsize=(8,4))
+                ax0, _, _, _ = add_axes(fig, 121, orthographic, args.coords, args.sdate, [-20,20], 11, "py")
+                ax1, bounds, norm, cmap = add_axes(fig, 122, orthographic, args.coords, args.sdate, [-20,20], 11, "web")
+            else: 
+                fig = plt.figure(dpi=150, figsize=(4,4))
+                ax0, bounds, norm, cmap = add_axes(fig, 111, orthographic, args.coords, args.sdate, [-20,20], 11, "py")
+            
             lat, lon = ds.coords["lat_pot"].values, ds.coords["lon_pot"].values
             pot = ds.data_vars["pot_arr"].values[t_id,:,:]
-            #pot, lat, lon = np.copy(mpot), np.copy(mlat), np.copy(mlon)
-            bounds = np.linspace(int(np.rint(np.nanmin(pot))/10)*10, int(np.rint(np.nanmax(pot))/10)*10, 11)
-            cmap = matplotlib.cm.get_cmap("jet")
-            cmap.set_bad("w", alpha=0.0)
-            norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
             XYZ = orthographic.transform_points(geodetic, lon, lat)
-            ax.contourf(XYZ[:,:,0], XYZ[:,:,1], pot, cmap=cmap, vmax=np.rint(np.nanmax(pot)), 
-                        vmin=np.rint(np.nanmin(pot)), transform=orthographic, alpha=0.8)
-            _add_colorbar(fig, ax, bounds, cmap, r"Potential ($\Phi_{pc}$), Volts")
-            ax.text(0.01, 1.1, "Date: "+args.sdate.strftime("%Y-%m-%d")+"\n"+\
-                    "Time: %s UT"%(args.sdate.strftime("%H:%M")+"-"+(args.sdate+dt.timedelta(minutes=2)).strftime("%H:%M")),
-                    ha="left", va="center", transform=ax.transAxes)
-            ax.text(0.99, 1.1, "Coords: $%s$"%args.coords, ha="right", va="center", transform=ax.transAxes)
-        plt_lons = np.arange( 0, 361, 30 )
-        mark_lons = np.arange( 0, 360, 30 )
-        plt_lats = np.arange(30,90,10)
-        gl = ax.gridlines(crs=cartopy.crs.Geodetic(), linewidth=0.5)
-        gl.xlocator = mticker.FixedLocator(plt_lons)
-        gl.ylocator = mticker.FixedLocator(plt_lats)
-        gl.xformatter = LONGITUDE_FORMATTER
-        gl.yformatter = LATITUDE_FORMATTER
-        gl.n_steps = 90
-        # mark the longitudes
-        ax.mark_latitudes(plt_lats, fontsize=10, color="r")
-        ax.mark_longitudes(lon_arr=mark_lons, fontsize=10, color="darkblue")
+            ax0.contourf(XYZ[:,:,0], XYZ[:,:,1], pot, cmap=cmap, vmax=20, 
+                        vmin=-20, transform=orthographic, alpha=0.8)
+            if args.comp is None: _add_colorbar(fig, ax0, bounds, cmap, r"Potential ($\Phi_{pc}$), kV")
+            else:
+                o = txt2csv(args.comp)
+                mlat, mlon, mpot = get_gridded_parameters(o, "mlat", "mlon", "Potential")
+                mpot /= 1000.
+                XYZ = orthographic.transform_points(geodetic, mlon, mlat)
+                ax1.contourf(XYZ[:,:,0], XYZ[:,:,1], mpot, cmap=cmap, vmax=20, 
+                        vmin=-20, transform=orthographic, alpha=0.8)
+                _add_colorbar(fig, ax1, bounds, cmap, r"Potential ($\Phi_{pc}$), kV")
+            
         fname = "tmp/%s.%s.png"%(args.sdate.strftime("%Y%m%dT%H%M"), p)
         fig.savefig(fname)
         plt.close()
@@ -132,11 +150,12 @@ def plot_map_grid_level_data(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-nc", "--nc_file", default="tmp/201110111200_201110111500_pot_north.nc", help="netCDF File name")
-    parser.add_argument("-s", "--sdate", default=dt.datetime(2011,10,11,12), help="Start date to plot", type=prs.parse)
+    parser.add_argument("-nc", "--nc_file", default="tmp/Lulu/20111011.1334-1340.north.nc", help="netCDF File name")
+    parser.add_argument("-s", "--sdate", default=dt.datetime(2011,10,11,13,34), help="Start date to plot", type=prs.parse)
     parser.add_argument("-e", "--edate", default=dt.datetime(2011,10,11,15), help="End date to plot", type=prs.parse)
     parser.add_argument("-p", "--plot_type", default="pot", help="Plot types", type=str)
-    parser.add_argument("-c", "--coords", default="aacgmv2_mlt", help="Coordinate types [aacgmv2, aacgmv2_mlt]", type=str)
+    parser.add_argument("-c", "--coords", default="aacgmv2_mlt", help="Coordinate types [geo, aacgmv2, aacgmv2_mlt]", type=str)
+    parser.add_argument("-cp", "--comp", default="tmp/pot.txt", help="Comparison file", type=str)
     args = parser.parse_args()
     args.plot_types = args.plot_type.split(",")
     for k in vars(args).keys():
