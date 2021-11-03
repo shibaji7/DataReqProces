@@ -326,6 +326,9 @@ class FetchMap(object):
         coefficients of the fit)
         """
         stime, etime, hemi, r = rec["stime"], rec["etime"], rec["hemi"], rec["rec"]
+        lat_step, lon_step = 1., 2.
+        num_lats = int((90.0 - pot_lat_min) / lat_step)
+        num_longs = int(360.0 / lon_step)
         if "vector.mlat" in r:
             hemi_str = "north" if hemi==1 else "south"
 
@@ -341,11 +344,7 @@ class FetchMap(object):
             # Set up more parameters for getting the fitted vectors
             theta_max = np.deg2rad(90.0 - np.absolute(lat_min_fit))
 
-            # we set up a grid to evaluate potential on...
-            lat_step = 1.
-            lon_step = 2.
-            num_lats = int((90.0 - pot_lat_min) / lat_step)
-            num_longs = int(360.0 / lon_step)
+            # we set up a grid to evaluate potential on...    
             zat_arr = np.array(range(num_lats)) * lat_step + pot_lat_min
             zat_arr = zat_arr * hemi
             zon_arr = np.array(range(num_longs))* lon_step
