@@ -41,7 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--end", default=None, help="End date", type=prs.parse)
     parser.add_argument("-r", "--rad", default="gbr", help="Radar code", type=str)
     parser.add_argument("-f", "--file_type", default=None, help="File type other than fitacf or map2", type=str)
-    parser.add_argument("-pm", "--param_file_name", default="Lulu", help="Parameter file name", type=str)
+    parser.add_argument("-pm", "--param_file_name", default="Sanchez", help="Parameter file name", type=str)
     parser.add_argument("-tmp", "--tmp_folder", default="tmp/", help="Local folder to save files", type=str)
     args = parser.parse_args()
     o = load_param_json(args.param_file_name)
@@ -51,5 +51,5 @@ if __name__ == "__main__":
     for k in vars(args).keys():
         print("     " + k + "->" + str(vars(args)[k]))
     if args.data_type in ["fitacf"]: fetch_fit_level_data(args)
-    elif args.data_type in ["map", "grid"]: fetch_map_level_data(args)
+    elif args.data_type in ["map", "grid", "cnvmap"]: fetch_map_level_data(args)
     os.system("rm -rf .empty __pycache__")

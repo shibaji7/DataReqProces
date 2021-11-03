@@ -67,8 +67,8 @@ def fetch_map_level_data(args):
     if len(args.scalers)+len(args.vectors) > 0: print(f" Fetching additional parameters: {'-'.join(args.scalers+args.vectors)}")
     for hemi in args.hemis:
         fm = FetchMap(dates, hemi, args.file_type, args.filestr)
-        if args.file_type in ["map", "map2", "mapex"]: fm.fetch_map_files()
-        elif args.file_type in ["cnvmap"]: fm.fetch_cnvmap_files()
+        if args.data_type in ["map", "map2", "mapex"]: fm.fetch_map_files()
+        elif args.data_type in ["cnvmap"]: fm.fetch_cnvmap_files()
         else: print(f" Wrong type found {args.file_type}!")
         for d in dates:
             start = d if args.start_date is None else args.start_date 
@@ -80,32 +80,12 @@ def fetch_map_level_data(args):
                                                                          end.strftime("%H%M"))
             print(f" File stores - \n\t{fname}")
             if not os.path.exists(fname):
-#             if not os.path.exists(fmap):
-#                 if len(j["scalers"])+len(j["vectors"]) > 0: 
-#                     d = fm.get_maps(args.start, args.end, j["scalers"], j["vectors"])
-#                     if len(d) == 0: print(f" No data for additional parameters!")
-#                     else: d.to_csv(fmap, index=False, header=True, float_format="%g")
-#                 else: print(" No additional parameters!")
-#             else: print(f" File exists {fmap}!")
-
-                if len(args.pev_params) > 0:
-                    o = fm.calcFitCnvs(start, end, args.pot_lat_min, args.cores, args.pev_params)
-                    if len(o) == 0: print(f" No data for PEV params!")
-                    else:
-                        ds = to_xarray(o, args.pev_params)
-                        ds.to_netcdf(fname)
-                else: print(" No PEV parameters!")
-            
-#             if not os.path.exists(fgrid_summ) or not os.path.exists(fgrid_reco):
-#                 if ("summary" in j["grid_params"].keys() or "records" in j["grid_params"].keys()):
-#                     summ, reco = fm.get_grids(args.start, args.end, j["grid_params"]["summary"], j["grid_params"]["records"])
-#                     if len(summ) == 0: print(f" No data for additional grid parameters!")
-#                     else:
-#                         col_map = dict(zip(j["grid_params"]["records"], j["grid_params"]["records_map"]))
-#                         summ = summ.rename(columns=col_map)
-#                         summ.to_csv(fgrid_summ, index=False, header=True, float_format="%g")
-#                     if len(reco) == 0: print(f" No data for additional grid parameters!")
-#                     else: reco.to_csv(fgrid_reco, index=False, header=True, float_format="%g")
-#                 else: print(" No additional grid parameters!")
-#             else: print(f" File exists {fgrid_reco} and(or) {fgrid_summ}!")
+                obj = dict()
+                if len(args.scalers)+len(args.vectors) > 0: obj["sv_o"] = fm.get_maps(start, end, args.scalers, args.vectors)
+                if ("summary" in args.grid_params.keys()) or ("records" in args.grid_params.keys()):
+                    obj["summ_o"], obj["reco_o"] = fm.get_grids(start, end, args.grid_params["summary"], args.grid_params["records"])
+                if len(args.pev_params) > 0: obj["pev_o"] = fm.calcFitCnvs(start, end, args.pot_lat_min, args.cores, args.pev_params)
+                ds = to_xarray(obj, args.pev_params, args.scalers, args.vectors, args.grid_params)
+                ds.to_netcdf(fname)
+                os.system("rm -rf raw/*")
     return

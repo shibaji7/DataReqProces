@@ -112,35 +112,36 @@ def plot_map_grid_level_data(args):
     print(f" Plot operations- {args.plot_type}")
     ds = xarray.open_dataset(args.nc_file)
     stime = [dt.datetime.utcfromtimestamp( (d - np.datetime64("1970-01-01T00:00:00Z","s")) / np.timedelta64(1, "s"))
-            for d in ds.coords["stime"].values]
+            for d in ds.coords["fparam.stime"].values]
     etime = [dt.datetime.utcfromtimestamp( (d - np.datetime64("1970-01-01T00:00:00Z","s")) / np.timedelta64(1, "s"))
-            for d in ds.coords["stime"].values]
+            for d in ds.coords["fparam.etime"].values]
     t_id = stime.index(args.sdate)
     geodetic = ccrs.Geodetic()
     orthographic = ccrs.NorthPolarStereo()
     for p in args.plot_types:    
         if p == "pot":
+            vlim, sep = [-40,40], 21
             if args.comp is not None: 
                 fig = plt.figure(dpi=150, figsize=(8,4))
-                ax0, _, _, _ = add_axes(fig, 121, orthographic, args.coords, args.sdate, [-20,20], 11, "py")
-                ax1, bounds, norm, cmap = add_axes(fig, 122, orthographic, args.coords, args.sdate, [-20,20], 11, "web")
+                ax0, _, _, _ = add_axes(fig, 121, orthographic, args.coords, args.sdate, vlim, sep, "py")
+                ax1, bounds, norm, cmap = add_axes(fig, 122, orthographic, args.coords, args.sdate, vlim, sep, "web")
             else: 
                 fig = plt.figure(dpi=150, figsize=(4,4))
-                ax0, bounds, norm, cmap = add_axes(fig, 111, orthographic, args.coords, args.sdate, [-20,20], 11, "py")
+                ax0, bounds, norm, cmap = add_axes(fig, 111, orthographic, args.coords, args.sdate, vlim, sep, "py")
             
-            lat, lon = ds.coords["lat_pot"].values, ds.coords["lon_pot"].values
-            pot = ds.data_vars["pot_arr"].values[t_id,:,:]
+            lat, lon = ds.coords["fparam.lat_pot"].values, ds.coords["fparam.lon_pot"].values
+            pot = ds.data_vars["fparam.pot_arr"].values[t_id,:,:]
             XYZ = orthographic.transform_points(geodetic, lon, lat)
-            ax0.contourf(XYZ[:,:,0], XYZ[:,:,1], pot, cmap=cmap, vmax=20, 
-                        vmin=-20, transform=orthographic, alpha=0.8)
+            ax0.contourf(XYZ[:,:,0], XYZ[:,:,1], pot, cmap=cmap, vmax=vlim[1], 
+                        vmin=vlim[0], transform=orthographic, alpha=0.8)
             if args.comp is None: _add_colorbar(fig, ax0, bounds, cmap, r"Potential ($\Phi_{pc}$), kV")
             else:
                 o = txt2csv(args.comp)
                 mlat, mlon, mpot = get_gridded_parameters(o, "mlat", "mlon", "Potential")
                 mpot /= 1000.
                 XYZ = orthographic.transform_points(geodetic, mlon, mlat)
-                ax1.contourf(XYZ[:,:,0], XYZ[:,:,1], mpot, cmap=cmap, vmax=20, 
-                        vmin=-20, transform=orthographic, alpha=0.8)
+                ax1.contourf(XYZ[:,:,0], XYZ[:,:,1], mpot, cmap=cmap, vmax=vlim[1], 
+                        vmin=vlim[0], transform=orthographic, alpha=0.8)
                 _add_colorbar(fig, ax1, bounds, cmap, r"Potential ($\Phi_{pc}$), kV")
             
         fname = "tmp/%s.%s.png"%(args.sdate.strftime("%Y%m%dT%H%M"), p)
@@ -150,12 +151,12 @@ def plot_map_grid_level_data(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-nc", "--nc_file", default="tmp/Lulu/20111011.1334-1340.north.nc", help="netCDF File name")
-    parser.add_argument("-s", "--sdate", default=dt.datetime(2011,10,11,13,34), help="Start date to plot", type=prs.parse)
-    parser.add_argument("-e", "--edate", default=dt.datetime(2011,10,11,15), help="End date to plot", type=prs.parse)
+    parser.add_argument("-nc", "--nc_file", default="tmp/Lulu/20101011.1200-1500.north.nc", help="netCDF File name")
+    parser.add_argument("-s", "--sdate", default=dt.datetime(2010,10,11,13,34), help="Start date to plot", type=prs.parse)
+    parser.add_argument("-e", "--edate", default=dt.datetime(2010,10,11,15), help="End date to plot", type=prs.parse)
     parser.add_argument("-p", "--plot_type", default="pot", help="Plot types", type=str)
     parser.add_argument("-c", "--coords", default="aacgmv2_mlt", help="Coordinate types [geo, aacgmv2, aacgmv2_mlt]", type=str)
-    parser.add_argument("-cp", "--comp", default="tmp/pot.txt", help="Comparison file", type=str)
+    parser.add_argument("-cp", "--comp", default=None, help="Comparison file", type=str)
     args = parser.parse_args()
     args.plot_types = args.plot_type.split(",")
     for k in vars(args).keys():

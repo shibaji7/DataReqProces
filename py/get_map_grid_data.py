@@ -69,7 +69,9 @@ class FetchMap(object):
         self.files = []
         for d in self.dates:
             f = self._filestr.format(year=d.year, hemi=self.hemi,file_type=self.file_type, date=d.strftime("%Y%m%d"))
-            if os.path.exists(f): 
+            fs = glob.glob(f)
+            if len(fs) > 0:
+                f = fs[0]
                 shutil.copy(f, "raw/")
                 dest = "raw/" + f.split("/")[-1]
                 self.files.append(dest.replace(".bz2", ""))
@@ -81,7 +83,7 @@ class FetchMap(object):
         if self.records == None:
             self.records = []
             for f in self.files:
-                if self.file_type == "cnvmap":
+                if "cnvmap" in f:
                     reader = pydarn.SuperDARNRead()
                     recs = reader.read_dmap(f)
                 else:
@@ -96,6 +98,7 @@ class FetchMap(object):
         """
         Fetch gridex, grid2 content
         """
+        print(" Fetch grid records.")
         self.summ, self.reco = pd.DataFrame(), pd.DataFrame()
         grids = self.fetch_records()
         for r in grids:
@@ -120,6 +123,7 @@ class FetchMap(object):
         """
         Fetch mapex, map2 file content
         """
+        print(" Fetch map records.")
         self.reco = pd.DataFrame()
         records = self.fetch_records()
         for r in records:
@@ -471,28 +475,58 @@ class FetchMap(object):
             o.append(rec)
         return o
     
-def to_xarray(o, pev_params):
+def to_xarray(obj, pev_params, scalers, vectors, grid_params):
     """
     Convert to X-array
-    o - list of dict
     """
+    var = dict()
+    crds = dict()
+    atrs = dict()
     
-    desc = "Processed %s data from VT SuperDARN (2021)\
+    if len(pev_params) > 0: var, crds, atrs = to_xarray_pev(obj["pev_o"], pev_params, var, crds, atrs)
+    if len(scalers) + len(vectors) > 0: var, crds, atrs = to_xarray_map(obj["sv_o"], scalers, vectors, var, crds, atrs)
+    if len(grid_params.keys()) > 0: var, crds, atrs = to_xarray_grd(obj["summ_o"], obj["reco_o"], grid_params, var, crds, atrs)
+    ds = xarray.Dataset(
+            coords=crds,            
+            data_vars=var,
+            attrs=atrs,
+    )
+    print(ds)
+    return ds
+
+def to_xarray_map(mo, scalers, vectors, var, crds, atrs):
+    crds["map.stime"] = ("map.time", mo.stime)
+    crds["map.etime"] = ("map.time", mo.etime)
+    for p in scalers+vectors:
+        var["map."+p] = ("map.time", mo[p])
+    atrs["map.desciption"] = "Processed Map data from VT SuperDARN (2021)\
             ------------------------------------------------------------\
-            efield_fit_theta: efield north [V/m]\
-            efield_fit_phi: efield east [V/m]\
-            vel_mag: velocity magnitude [m/s]\
-            vel_azm: velocity azimuth [degree]\
-            mlats: magnetic latitudes [degree for fitted efields and gridded velocities]\
-            mlons: magnetic longitudes [degree for fitted efields and gridded velocities]\
-            stime: start time [datetime]\
-            etime: end time [datetime]\
-            lat_pot: magnetic latitudes [degree for fitted potentials]\
-            lon_pot: magnetic longitudes [degree for fitted potentials]\
-            pot_arr: fitted potential [kV]\
+            Parameter extension: [map]\
             ------------------------------------------------------------\
-            @Powered by pydarn"%("-".join(pev_params))
-    
+            @Powered by pydarn"
+    return var, crds, atrs
+
+def to_xarray_grd(so, ro, grid_params, var, crds, atrs):
+    if ("summary" in grid_params.keys()) and (len(grid_params["summary"]) > 0):
+        crds["grd.summary.stime"] = ("grd.summary.time", so.stime)
+        crds["grd.summary.etime"] = ("grd.summary.time", so.etime)
+        for p in grid_params["summary"]:
+            var["grd.summary."+p] = ("grd.summary.time", so[p])
+    if ("records" in grid_params.keys()) and (len(grid_params["records"]) > 0):
+        crds["grd.records.stime"] = ("grd.records.time", ro.stime)
+        crds["grd.records.etime"] = ("grd.records.time", ro.etime)
+        for p in grid_params["records"]:
+            var["grd.records."+p.replace("vector.","")] = ("grd.records.time", ro[p])
+    atrs["grd.desciption"] = "Processed Grid data from VT SuperDARN (2021)\
+            ------------------------------------------------------------\
+            Parameter extension: [grd.summary, grd.records]\
+            grd.summary: Holds information about the data processing\
+            grd.records: Holds grid data records\
+            ------------------------------------------------------------\
+            @Powered by pydarn"
+    return var, crds, atrs
+
+def to_xarray_pev(o, pev_params, var, crds, atrs):
     stime, etime, hemi = [], [], []
     max_ev_len = 0
     for j, i in enumerate(o):
@@ -506,7 +540,6 @@ def to_xarray(o, pev_params):
     stime.sort()
     etime.sort()
     
-    var = dict()
     if "pot" in pev_params:
         pot_arr, lat_cntr, lon_cntr = np.zeros((len(stime), pot_arr_shape[0], pot_arr_shape[1])), None, None
     if "vel" in pev_params or "efield" in pev_params:
@@ -526,29 +559,39 @@ def to_xarray(o, pev_params):
                 vel_azm[stime.index(i["stime"]), :L] = i["vel_efield"]["vel_azm"]
             if "efield" in pev_params:
                 efield_fit[stime.index(i["stime"]), :, :L] = i["vel_efield"]["efield_fit"]
-    crds = dict(
-        hemisphere = ("hemi", hemi),
-        stime = ("time", stime),
-        etime = ("time", etime)
-    )
+    
+    crds["fparam.hemisphere"] = ("fparam.hemi", hemi)
+    crds["fparam.stime"] = ("fparam.time", stime)
+    crds["fparam.etime"] = ("fparam.time", etime)
+    
     if "pot" in pev_params: 
-        crds["lat_pot"] = (["pot_x","pot_y"], lat_cntr.astype(int))
-        crds["lon_pot"] = (["pot_x","pot_y"], lon_cntr.astype(int))
-        var["pot_arr"] = (["time", "pot_x","pot_y"], pot_arr)
+        crds["fparam.lat_pot"] = (["fparam.pot_x","fparam.pot_y"], lat_cntr.astype(int))
+        crds["fparam.lon_pot"] = (["fparam.pot_x","fparam.pot_y"], lon_cntr.astype(int))
+        var["fparam.pot_arr"] = (["fparam.time", "fparam.pot_x","fparam.pot_y"], pot_arr)
     if "vel" in pev_params or "efield" in pev_params:
-        crds["max_efield_vel_len"] = ("max_ev_len", range(max_ev_len))
-        var["mlats"] = (["time", "max_ev_len"], mlats)
-        var["mlons"] = (["time", "max_ev_len"], mlons)
+        crds["max_efield_vel_len"] = ("fparam.max_ev_len", range(max_ev_len))
+        var["fparam.mlats"] = (["fparam.time", "fparam.max_ev_len"], mlats)
+        var["fparam.mlons"] = (["fparam.time", "fparam.max_ev_len"], mlons)
         if "vel" in pev_params: 
-            var["vel_mag"] = (["time", "max_ev_len"], vel_mag)
-            var["vel_azm"] = (["time", "max_ev_len"], vel_azm)
+            var["fparam.vel_mag"] = (["fparam.time", "fparam.max_ev_len"], vel_mag)
+            var["fparam.vel_azm"] = (["fparam.time", "fparam.max_ev_len"], vel_azm)
         if "efield" in pev_params:
-            var["efield_fit_theta"] = (["time", "max_ev_len"], efield_fit[:,0,:])
-            var["efield_fit_phi"] = (["time", "max_ev_len"], efield_fit[:,1,:])
-    ds = xarray.Dataset(
-            coords=crds,            
-            data_vars=var,
-            attrs=dict(description=desc),
-    )
-    print(ds)
-    return ds
+            var["fparam.efield_fit_theta"] = (["fparam.time", "fparam.max_ev_len"], efield_fit[:,0,:])
+            var["fparam.efield_fit_phi"] = (["fparam.time", "fparam.max_ev_len"], efield_fit[:,1,:])
+    atrs["fparam.desciption"] = "Processed %s data from VT SuperDARN (2021)\
+            ------------------------------------------------------------\
+            Parameter extension: [fparam]\
+            fparam.efield_fit_theta: efield north [V/m]\
+            fparam.efield_fit_phi: efield east [V/m]\
+            fparam.vel_mag: velocity magnitude [m/s]\
+            fparam.vel_azm: velocity azimuth [degree]\
+            fparam.mlats: magnetic latitudes [degree for fitted efields and gridded velocities]\
+            fparam.mlons: magnetic longitudes [degree for fitted efields and gridded velocities]\
+            fparam.stime: start time [datetime]\
+            fparam.etime: end time [datetime]\
+            fparam.lat_pot: magnetic latitudes [degree for fitted potentials]\
+            fparam.lon_pot: magnetic longitudes [degree for fitted potentials]\
+            fparam.pot_arr: fitted potential [kV]\
+            ------------------------------------------------------------\
+            @Powered by pydarn"%("-".join(pev_params))
+    return var, crds, atrs

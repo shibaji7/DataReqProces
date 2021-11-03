@@ -1,9 +1,11 @@
 {
-    "data_type": "map",
-    "filestr": "/sd-data/{year}/map/{hemi}/{date}.{hemi}*.bz2",
+    "data_type": "cnvmap",
+    "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
     "start_date": null,
     "end_date": null,
-    "dates": [],
+    "dates": ["1997-01-07", "1997-01-09", "1997-01-10", "1997-02-04", "1997-03-12", "1998-01-29",
+              "1998-03-27", "1998-01-20", "1998-01-23", "1998-01-26", "1998-01-27", "1998-02-01", 
+              "1998-04-29", "1998-09-21", "1998-09-23"],
     "hemis": ["north"],
     "scalers": [],
     "vectors": [],
@@ -14,11 +16,9 @@
                     "p.max", "w.min", "w.max", "ve.min", "ve.max"],
         "records": ["vector.mlat", "vector.mlon", "vector.kvect", "vector.stid", "vector.channel",
                     "vector.index", "vector.vel.median", "vector.vel.sd", "vector.pwr.median", 
-                    "vector.pwr.sd", "vector.wdt.median", "vector.wdt.sd"],
-        "records_map": ["mlat", "mlon", "kvect", "stid", "channel", "index", "vel.median", "vel.sd",
-                        "pwr.median", "pwr.sd", "wdt.median", "wdt.sd"]
+                    "vector.pwr.sd", "vector.wdt.median", "vector.wdt.sd"]
     },
-    "file_name_format": "{start}_{end}.nc",
+    "file_name_format": "{dn}.{hemi}.nc",
     "cores": 24,
     "pot_lat_min": 30,
     "med_filt": {
