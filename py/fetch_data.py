@@ -15,6 +15,7 @@ import argparse
 from dateutil import parser as prs
 import bz2
 import pydarn
+import gc
 
 from get_map_grid_data import FetchMap, to_xarray
 from get_fit_data import FetchData
@@ -66,11 +67,11 @@ def fetch_map_level_data(args):
             dn += dt.timedelta(1)
     if len(args.scalers)+len(args.vectors) > 0: print(f" Fetching additional parameters: {'-'.join(args.scalers+args.vectors)}")
     for hemi in args.hemis:
-        fm = FetchMap(dates, hemi, args.file_type, args.filestr)
-        if args.data_type in ["map", "map2", "mapex"]: fm.fetch_map_files()
-        elif args.data_type in ["cnvmap"]: fm.fetch_cnvmap_files()
-        else: print(f" Wrong type found {args.file_type}!")
         for d in dates:
+            fm = FetchMap([d], hemi, args.file_type, args.filestr)
+            if args.data_type in ["map", "map2", "mapex"]: fm.fetch_map_files()
+            elif args.data_type in ["cnvmap"]: fm.fetch_cnvmap_files()
+            else: print(f" Wrong type found {args.file_type}!")
             start = d if args.start_date is None else args.start_date 
             end = d+dt.timedelta(1) if args.end_date is None else args.end_date 
             if args.start_date is None: fname = args.tmp_folder + args.file_name_format.format(hemi=hemi,
@@ -88,4 +89,5 @@ def fetch_map_level_data(args):
                 ds = to_xarray(obj, args.pev_params, args.scalers, args.vectors, args.grid_params)
                 ds.to_netcdf(fname)
                 os.system("rm -rf raw/*")
+            gc.collect()
     return

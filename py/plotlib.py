@@ -130,6 +130,14 @@ def plot_map_grid_level_data(args):
                 ax0, bounds, norm, cmap = add_axes(fig, 111, orthographic, args.coords, args.sdate, vlim, sep, "py")
             
             lat, lon = ds.coords["fparam.lat_pot"].values, ds.coords["fparam.lon_pot"].values
+            
+            if args.coords == "geo":
+                lon = np.mod( (lon + 180), 360 ) - 180
+                glat, glon = np.zeros_like(lat), np.zeros_like(lon)
+                for i in range(lat.shape[0]):
+                    glat[i,:], glon[i,:], _ = aacgmv2.convert_latlon_arr(lat[i,:], lon[i,:], 300, args.sdate ,"A2G")
+                lat, lon = glat, glon
+                print(lat, lon)
             pot = ds.data_vars["fparam.pot_arr"].values[t_id,:,:]
             XYZ = orthographic.transform_points(geodetic, lon, lat)
             ax0.contourf(XYZ[:,:,0], XYZ[:,:,1], pot, cmap=cmap, vmax=vlim[1], 
@@ -155,7 +163,7 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--sdate", default=dt.datetime(2010,10,11,13,34), help="Start date to plot", type=prs.parse)
     parser.add_argument("-e", "--edate", default=dt.datetime(2010,10,11,15), help="End date to plot", type=prs.parse)
     parser.add_argument("-p", "--plot_type", default="pot", help="Plot types", type=str)
-    parser.add_argument("-c", "--coords", default="aacgmv2_mlt", help="Coordinate types [geo, aacgmv2, aacgmv2_mlt]", type=str)
+    parser.add_argument("-c", "--coords", default="aacgmv2", help="Coordinate types [geo, aacgmv2, aacgmv2_mlt]", type=str)
     parser.add_argument("-cp", "--comp", default=None, help="Comparison file", type=str)
     args = parser.parse_args()
     args.plot_types = args.plot_type.split(",")
