@@ -516,13 +516,10 @@ def to_xarray_grd(so, ro, grid_params, var, crds, atrs):
         crds["grd.records.etime"] = ("grd.records.time", ro.etime)
         for p in grid_params["records"]:
             var["grd.records."+p.replace("vector.","")] = ("grd.records.time", ro[p])
-    atrs["grd.desciption"] = "Processed Grid data from VT SuperDARN (2021)\
-            ------------------------------------------------------------\
-            Parameter extension: [grd.summary, grd.records]\
-            grd.summary: Holds information about the data processing\
-            grd.records: Holds grid data records\
-            ------------------------------------------------------------\
-            @Powered by pydarn"
+    atrs["grd.desciption"] = "Processed Grid data from VT SuperDARN (2021)@Powered by pydarn"            
+    atrs["param.ext"] = "Parameter extension: [grd]"
+    atrs["grd.summary"] = "Holds information about the data processing"
+    atrs["grd.records"] = "Holds grid data records"
     return var, crds, atrs
 
 def to_xarray_pev(o, pev_params, var, crds, atrs):
