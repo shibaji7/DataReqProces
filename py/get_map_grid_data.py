@@ -83,7 +83,7 @@ class FetchMap(object):
         if self.records == None:
             self.records = []
             for f in self.files:
-                if "cnvmap" in f:
+                if ("cnvmap" in f) or ("mapex" in f):
                     reader = pydarn.SuperDARNRead()
                     recs = reader.read_dmap(f)
                 else:
@@ -577,20 +577,17 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
         if "efield" in pev_params:
             var["fparam.efield_fit_theta"] = (["fparam.time", "fparam.max_ev_len"], efield_fit[:,0,:])
             var["fparam.efield_fit_phi"] = (["fparam.time", "fparam.max_ev_len"], efield_fit[:,1,:])
-    atrs["fparam.desciption"] = "Processed %s data from VT SuperDARN (2021)\
-            ------------------------------------------------------------\
-            Parameter extension: [fparam]\
-            fparam.efield_fit_theta: efield north [V/m]\
-            fparam.efield_fit_phi: efield east [V/m]\
-            fparam.vel_mag: velocity magnitude [m/s]\
-            fparam.vel_azm: velocity azimuth [degree]\
-            fparam.mlats: magnetic latitudes [degree for fitted efields and gridded velocities]\
-            fparam.mlons: magnetic longitudes [degree for fitted efields and gridded velocities]\
-            fparam.stime: start time [datetime]\
-            fparam.etime: end time [datetime]\
-            fparam.lat_pot: magnetic latitudes [degree for fitted potentials]\
-            fparam.lon_pot: magnetic longitudes [degree for fitted potentials]\
-            fparam.pot_arr: fitted potential [kV]\
-            ------------------------------------------------------------\
-            @Powered by pydarn"%("-".join(pev_params))
+    atrs["fparam.desciption"] = "Processed %s data from VT SuperDARN (2021)@Powered by pydarn"%("-".join(pev_params))
+    atrs["param.ext"] = "Parameter extension: [fparam]"
+    atrs["fparam.efield_fit_theta"] = "efield north [V/m]"
+    atrs["fparam.efield_fit_phi"] = "efield east [V/m]"
+    atrs["fparam.vel_mag"] = "velocity magnitude [m/s]"
+    atrs["fparam.vel_azm"] = "velocity azimuth [degree]"
+    atrs["fparam.mlats"] = "magnetic latitudes [degrees; for fitted efields and gridded velocities]"
+    atrs["fparam.mlons"] = "magnetic longitudes [degrees; for fitted efields and gridded velocities]"
+    atrs["fparam.stime"] = "start time [datetime]"
+    atrs["fparam.etime"] = "end time [datetime]"
+    atrs["fparam.lat_pot"] = "magnetic latitudes [degrees; for fitted potentials]"
+    atrs["fparam.lon_pot"] = "magnetic longitudes [degrees; for fitted potentials]"
+    atrs["fparam.pot_arr"] = " fitted potential [kV]"            
     return var, crds, atrs
