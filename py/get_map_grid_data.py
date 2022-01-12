@@ -25,6 +25,8 @@ import configparser
 import shutil
 import xarray
 
+from plotMapGrd import MapPlot
+
 import multiprocessing as mp
 from functools import partial
 
@@ -55,7 +57,8 @@ class FetchMap(object):
         """
         self.files = []
         for d in self.dates:
-            f = self._filestr.format(year=d.year, hemi=self.hemi,file_type=self.file_type, date=d.strftime("%Y%m%d"))
+            f = self._filestr.format(year=d.year, hemi=self.hemi,file_type=self.file_type,
+                                     date=d.strftime("%Y%m%d"))
             fs = glob.glob(f)
             if len(fs) > 0: self.files.append(fs[0])
             else: print(f" File not exists, {f}!")
@@ -68,7 +71,8 @@ class FetchMap(object):
         if not os.path.exists("raw/"): os.system("mkdir raw/")
         self.files = []
         for d in self.dates:
-            f = self._filestr.format(year=d.year, hemi=self.hemi,file_type=self.file_type, date=d.strftime("%Y%m%d"))
+            f = self._filestr.format(year=d.year, hemi=self.hemi,file_type=self.file_type, 
+                                     date=d.strftime("%Y%m%d"))
             fs = glob.glob(f)
             if len(fs) > 0:
                 f = fs[0]
@@ -119,7 +123,7 @@ class FetchMap(object):
         self.reco = self.reco[(self.reco.stime>=start) & (self.reco.stime<=end)]
         return self.summ, self.reco
     
-    def get_maps(self, start, end, scalers=["cpcp"], vectors=[]):
+    def get_maps(self, start, end, scalers=["pot.drop"], vectors=[]):
         """
         Fetch mapex, map2 file content
         """
@@ -139,7 +143,8 @@ class FetchMap(object):
                 o[p] = [r[p]]*L
             self.reco = pd.concat([self.reco, o])
         self.reco = self.reco.sort_values(by="stime")
-        self.reco = self.reco[(self.reco.stime>=start) & (self.reco.stime<=end)].reset_index().drop(columns=["index"])
+        self.reco = self.reco[(self.reco.stime>=start) & (self.reco.stime<=end)].reset_index().\
+                    drop(columns=["index"])
         return self.reco
     
     def calcFitCnvVel(self, rec):
@@ -312,12 +317,12 @@ class FetchMap(object):
                 vel_mag = np.array([0.0])
                 vel_azm = np.array([0.0])
             else:
-                if hemi == -1: vel_azm[vel_chk_zero_inds] = np.rad2deg(np.arctan2(vel_fit_vecs[1,vel_chk_zero_inds], 
-                                                                                        vel_fit_vecs[0,vel_chk_zero_inds]))
+                if hemi == -1: vel_azm[vel_chk_zero_inds] =\
+                    np.rad2deg(np.arctan2(vel_fit_vecs[1,vel_chk_zero_inds],                                                                                         vel_fit_vecs[0,vel_chk_zero_inds]))
                 else: vel_azm[vel_chk_zero_inds] = np.rad2deg(np.arctan2(vel_fit_vecs[1,vel_chk_zero_inds],
                                                                          -vel_fit_vecs[0,vel_chk_zero_inds]))
-        else: mlats, mlons, vel_mag, vel_azm, efield_fit = np.zeros((1))*np.nan, np.zeros((1))*np.nan, np.zeros((1))*np.nan,\
-                    np.zeros((1))*np.nan, np.zeros((2,1))*np.nan
+        else: mlats, mlons, vel_mag, vel_azm, efield_fit = np.zeros((1))*np.nan, np.zeros((1))*np.nan,\
+                                            np.zeros((1))*np.nan, np.zeros((1))*np.nan, np.zeros((2,1))*np.nan
         return mlats, mlons, vel_mag, vel_azm, efield_fit
     
     def calcCnvPots(self, rec, pot_lat_min=30.):
@@ -328,7 +333,7 @@ class FetchMap(object):
         stime, etime, hemi, r = rec["stime"], rec["etime"], rec["hemi"], rec["rec"]
         lat_step, lon_step = 1., 2.
         num_lats = int((90.0 - pot_lat_min) / lat_step)
-        num_longs = int(360.0 / lon_step)
+        num_longs = int(360.0 / lon_step) + 1
         if "vector.mlat" in r:
             hemi_str = "north" if hemi==1 else "south"
 
@@ -434,7 +439,7 @@ class FetchMap(object):
             np.zeros((num_longs, num_lats))*np.nan, np.zeros((num_longs, num_lats))*np.nan
         return lat_cntr, lon_cntr, pot_arr
     
-    def proc(self, rec, pot_lat_min=30., pev_params=["pot", "efield", "vel"]):
+    def proc(self, rec, pot_lat_min=30., pev_params=["pot", "efield", "vel"], plots={}):
         """
         Compute E-field and Pot
         """
@@ -443,15 +448,28 @@ class FetchMap(object):
             mlats, mlons, vel_mag, vel_azm, efield_fit = self.calcFitCnvVel(rec)
             rec["vel_efield"] = {}
             rec["vel_efield"]["mlats"], rec["vel_efield"]["mlons"], rec["vel_efield"]["vel_mag"],\
-                    rec["vel_efield"]["vel_azm"], rec["vel_efield"]["efield_fit"] = mlats, mlons, vel_mag, vel_azm, efield_fit
+                    rec["vel_efield"]["vel_azm"], rec["vel_efield"]["efield_fit"] = mlats, mlons, vel_mag,\
+                                                                    vel_azm, efield_fit
         if "pot" in pev_params: 
             rec["pot"] = {}
             lat_cntr, lon_cntr, pot_arr = self.calcCnvPots(rec, pot_lat_min)
             rec["pot"]["lat_cntr"], rec["pot"]["lon_cntr"], rec["pot"]["pot_arr"] = lat_cntr, lon_cntr, pot_arr
+        rec["coords"] = "aacgmv2_mlt"
+        if (len(plots) > 0) and ("map" in plots.keys()) and plots["map"]: self.map_plot(rec, plots["map"]) 
         del rec["rec"]
         return rec
     
-    def calcFitCnvs(self, start=None, end=None, pot_lat_min=30., cores=24, pev_params=["pot", "efield", "vel"]):
+    def map_plot(self, rec, ftag):
+        fname = ftag.format(date=rec["stime"].strftime("%Y%m%d-%H%M"), hemi=rec["hemi_str"][0].upper())
+        mp = MapPlot(rec)
+        mp.overlayHMB()
+        mp.overlayCnvCntrs()
+        mp.overlayMapFitVel()
+        mp.save(fname)
+        return
+    
+    def calcFitCnvs(self, start=None, end=None, pot_lat_min=30., cores=24, 
+                    pev_params=["pot", "efield", "vel"], plots={}):
         record_list = []
         records = self.fetch_records()
         hemi = 1 if self.hemi=="north" else -1
@@ -465,11 +483,12 @@ class FetchMap(object):
                 record_list.append({"stime":stime, "etime": etime, "rec":r, "hemi": hemi, "hemi_str": hemi_str})
             else:
                 if (stime >= start) and (etime <= end):
-                    record_list.append({"stime":stime, "etime": etime, "rec":r, "hemi": hemi, "hemi_str": hemi_str})
-                
+                    print(r.keys())
+                    record_list.append({"stime":stime, "etime": etime, "rec":r, "hemi": hemi, 
+                                        "hemi_str": hemi_str})                
         o = []
         p0 = mp.Pool(cores)
-        partial_filter = partial(self.proc, pot_lat_min=pot_lat_min, pev_params=pev_params)
+        partial_filter = partial(self.proc, pot_lat_min=pot_lat_min, pev_params=pev_params,plots=plots)
         for rec in p0.map(partial_filter, record_list):
             o.append(rec)
         return o
@@ -483,8 +502,10 @@ def to_xarray(obj, pev_params, scalers, vectors, grid_params):
     atrs = dict()
     
     if len(pev_params) > 0: var, crds, atrs = to_xarray_pev(obj["pev_o"], pev_params, var, crds, atrs)
-    if len(scalers) + len(vectors) > 0: var, crds, atrs = to_xarray_map(obj["sv_o"], scalers, vectors, var, crds, atrs)
-    if len(grid_params.keys()) > 0: var, crds, atrs = to_xarray_grd(obj["summ_o"], obj["reco_o"], grid_params, var, crds, atrs)
+    if len(scalers) + len(vectors) > 0: var, crds, atrs = to_xarray_map(obj["sv_o"], scalers, 
+                                                                        vectors, var, crds, atrs)
+    if len(grid_params.keys()) > 0: var, crds, atrs = to_xarray_grd(obj["summ_o"], obj["reco_o"], 
+                                                                    grid_params, var, crds, atrs)
     ds = xarray.Dataset(
             coords=crds,            
             data_vars=var,
@@ -540,7 +561,8 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
         pot_arr, lat_cntr, lon_cntr = np.zeros((len(stime), pot_arr_shape[0], pot_arr_shape[1])), None, None
     if "vel" in pev_params or "efield" in pev_params:
         mlons, mlats = np.zeros((len(stime), max_ev_len))*np.nan, np.zeros((len(stime), max_ev_len))*np.nan
-        if "vel" in pev_params: vel_mag, vel_azm = np.zeros((len(stime), max_ev_len))*np.nan, np.zeros((len(stime), max_ev_len))*np.nan
+        if "vel" in pev_params: vel_mag, vel_azm = np.zeros((len(stime), max_ev_len))*np.nan,\
+                    np.zeros((len(stime), max_ev_len))*np.nan
         if "efield" in pev_params: efield_fit = np.zeros((len(stime), 2, max_ev_len))
     for j, i in enumerate(o):
         if "pot" in pev_params:

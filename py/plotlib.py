@@ -89,7 +89,7 @@ def add_axes(fig, num, proj, coords, date, vlim, nlim, ty):
     cmap.set_bad("w", alpha=0.0)
     norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
     
-    plt_lons = np.arange( 0, 360, 30 )
+    plt_lons = np.arange( 0, 361, 30 )
     mark_lons = np.arange( 0, 360, 30 )
     plt_lats = np.arange(30,90,10)
     gl = ax.gridlines(crs=cartopy.crs.Geodetic(), linewidth=0.5)
@@ -137,7 +137,6 @@ def plot_map_grid_level_data(args):
                 for i in range(lat.shape[0]):
                     glat[i,:], glon[i,:], _ = aacgmv2.convert_latlon_arr(lat[i,:], lon[i,:], 300, args.sdate ,"A2G")
                 lat, lon = glat, glon
-                print(lat, lon)
             pot = ds.data_vars["fparam.pot_arr"].values[t_id,:,:]
             XYZ = orthographic.transform_points(geodetic, lon, lat)
             ax0.contourf(XYZ[:,:,0], XYZ[:,:,1], pot, cmap=cmap, vmax=vlim[1], 

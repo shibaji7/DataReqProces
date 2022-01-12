@@ -41,7 +41,7 @@ class SDCarto(GeoAxes):
         # finally, initialize te GeoAxes object
         super().__init__(map_projection=map_projection,*args, **kwargs)
 
-    def overaly_coast_lakes(self, resolution="110m", color="black", **kwargs):
+    def overaly_coast_lakes(self, resolution="50m", color="black", **kwargs):
         """
         Overlay AACGM coastlines and lakes
         """
@@ -53,7 +53,7 @@ class SDCarto(GeoAxes):
         self.add_feature( cartopy.feature.COASTLINE, **kwargs )
         self.add_feature( cartopy.feature.LAKES, **kwargs )
         
-    def coastlines(self,resolution="110m", color="black", **kwargs):
+    def coastlines(self,resolution="50m", color="black", **kwargs):
         # details!
         kwargs["edgecolor"] = color
         kwargs["facecolor"] = "none"
@@ -158,7 +158,7 @@ class SDCarto(GeoAxes):
             # check if lats are out of extent! if so ignore them
             lat_lim = self.get_extent(crs=cartopy.crs.Geodetic())[2::]
             if (lat_arr[_np] >= min(lat_lim)) and (lat_arr[_np] <= max(lat_lim)):
-                self.text( _pro[0], _pro[1], str(lat_arr[_np]), **kwargs)
+                self.text( _pro[0], _pro[1], r"$%s^{\circ}$"%str(lat_arr[_np]), **kwargs)
             else:
                 out_extent_lats = True
         if out_extent_lats:
@@ -196,7 +196,7 @@ class SDCarto(GeoAxes):
         line_constructor = lambda t, n, b: numpy.vstack(\
                         (numpy.zeros(n) + t, numpy.linspace(b[2], b[3], n))\
                         ).T
-        for t in lon_arr:
+        for t in lon_arr[:-1]:
             xy = line_constructor(t, 30, plot_extent)
             # print(xy)
             proj_xyz = self.projection.transform_points(\
@@ -232,7 +232,10 @@ class SDCarto(GeoAxes):
                 marker_text = str(int(t/15.))
             else:
                 marker_text = str(t)
-            self.text( locs.bounds[0],locs.bounds[1], marker_text, ha=ha, va=va, **kwargs)
+            self.text( locs.bounds[0]+.02*locs.bounds[0],locs.bounds[1]+.02*locs.bounds[1], 
+                      marker_text, ha=ha, va=va, **kwargs)
+        return
+
 
         
 # Now register the projection with matplotlib so the user can select

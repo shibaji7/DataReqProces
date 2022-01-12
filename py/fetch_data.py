@@ -44,7 +44,8 @@ def fetch_fit_level_data(args):
                         fbeams.extend(s.beams)
                     fo = fdata.convert_to_pandas(fbeams, s_params=args.scalers, v_params=args.vectors)
                     fo = futils.update_geo_location(args.rad, fo)
-                    fo.to_csv(fname.replace(args.rad, args.rad+"_mfil"), header=True, index=False, float_format="%g")
+                    fo.to_csv(fname.replace(args.rad, args.rad+"_mfil"), header=True, index=False,
+                              float_format="%g")
                 elif args.save_type=="netCDE4":
                     ds = fdata.to_xarray(fscans)
             if args.save_type=="pandas":
@@ -65,7 +66,8 @@ def fetch_map_level_data(args):
         while dn <= args.end_date:
             dates.append(dn)
             dn += dt.timedelta(1)
-    if len(args.scalers)+len(args.vectors) > 0: print(f" Fetching additional parameters: {'-'.join(args.scalers+args.vectors)}")
+    if len(args.scalers)+len(args.vectors) > 0: 
+        print(f" Fetching additional parameters: {'-'.join(args.scalers+args.vectors)}")
     for hemi in args.hemis:
         for d in dates:
             fm = FetchMap([d], hemi, args.file_type, args.filestr)
@@ -74,18 +76,22 @@ def fetch_map_level_data(args):
             else: print(f" Wrong type found {args.file_type}!")
             start = d if args.start_date is None else args.start_date 
             end = d+dt.timedelta(1) if args.end_date is None else args.end_date 
-            if args.start_date is None: fname = args.tmp_folder + args.file_name_format.format(hemi=hemi,
-                                                                                               dn=start.strftime("%Y%m%d"))
+            if args.start_date is None: fname = args.tmp_folder + args.file_name_format.format(hemi=hemi,                                                                                               dn=start.strftime("%Y%m%d"))
             else: fname = args.tmp_folder + args.file_name_format.format(hemi=hemi, 
                                                                          dn=start.strftime("%Y%m%d.%H%M-")+\
                                                                          end.strftime("%H%M"))
             print(f" File stores - \n\t{fname}")
             if not os.path.exists(fname):
                 obj = dict()
-                if len(args.scalers)+len(args.vectors) > 0: obj["sv_o"] = fm.get_maps(start, end, args.scalers, args.vectors)
+                if len(args.scalers)+len(args.vectors) > 0: obj["sv_o"] = fm.get_maps(start, end, 
+                                                                                      args.scalers,
+                                                                                      args.vectors)
                 if ("summary" in args.grid_params.keys()) or ("records" in args.grid_params.keys()):
-                    obj["summ_o"], obj["reco_o"] = fm.get_grids(start, end, args.grid_params["summary"], args.grid_params["records"])
-                if len(args.pev_params) > 0: obj["pev_o"] = fm.calcFitCnvs(start, end, args.pot_lat_min, args.cores, args.pev_params)
+                    obj["summ_o"], obj["reco_o"] = fm.get_grids(start, end, args.grid_params["summary"],
+                                                                args.grid_params["records"])
+                if len(args.pev_params) > 0: obj["pev_o"] = fm.calcFitCnvs(start, end, args.pot_lat_min,
+                                                                           args.cores, args.pev_params, 
+                                                                           args.plots)
                 ds = to_xarray(obj, args.pev_params, args.scalers, args.vectors, args.grid_params)
                 ds.to_netcdf(fname)
                 os.system("rm -rf raw/*")
