@@ -91,10 +91,15 @@ class MapPlot(object):
         self.geo = ccrs.Geodetic()
         self.ax.text(-0.02, 0.99, "Coord: MLT", ha="center", va="top", 
                      transform=self.ax.transAxes, fontsize="x-small", rotation=90)
-        model_details = r"$\Phi_{pc}=%d$ kV"%(self.rec["rec"]["pot.drop"]/1e3) + "\n"\
-                        + r"$\Lambda_{HM}=%d^{\circ}$"%np.min(self.rec["rec"]["latmin"]) + "\n"\
-                        + r"$N_{vc}=%d$"%len(self.rec["rec"]["vector.mlon"]) + "\n"\
-                        + r"$N_{rads}=%d$"%len(self.rec["rec"]["stid"])
+        model_details = ""
+        if "pot.drop" in self.rec["rec"].keys(): 
+            model_details += r"$\Phi_{pc}=%d$ kV"%(self.rec["rec"]["pot.drop"]/1e3) + "\n"
+        if "latmin" in self.rec["rec"].keys():
+            model_details += r"$\Lambda_{HM}=%d^{\circ}$"%np.min(self.rec["rec"]["latmin"]) + "\n"
+        if "vector.mlon" in self.rec["rec"].keys():
+            model_details += r"$N_{vc}=%d$"%len(self.rec["rec"]["vector.mlon"]) + "\n"
+        if "stid" in self.rec["rec"].keys():
+            model_details += r"$N_{rads}=%d$"%len(self.rec["rec"]["stid"])
         self.ax.text(0.05, 0.05, model_details, ha="left", va="bottom", 
                      transform=self.ax.transAxes, fontsize="small")
         return

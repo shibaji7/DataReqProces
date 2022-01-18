@@ -33,6 +33,7 @@ def load_param_json(param_file_name):
     # Set median filter
     o["boxcar"] = True if ("med_filt" in o.keys()) and ("thresh" in o["med_filt"].keys())\
             and (o["med_filt"]["thresh"] is not None) else False
+    if "plots" not in o.keys(): o["plots"] = {}
     return o
 
 if __name__ == "__main__":

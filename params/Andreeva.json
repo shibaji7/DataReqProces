@@ -1,13 +1,13 @@
 {
     "data_type": "mapex",
     "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
-    "start_date": "2007-11-22",
-    "end_date": "2007-11-22T01",
+    "start_date": "2000-10-23",
+    "end_date": "2000-10-23T01",
     "dates": [],
     "hemis": ["north"],
     "scalers": ["pot.drop"],
     "vectors": [],
-    "pev_params": [],
+    "pev_params": ["pot", "efield", "vel"],
     "grid_params": {
     },
     "file_name_format": "{dn}.{hemi}.nc",

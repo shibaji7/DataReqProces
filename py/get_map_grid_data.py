@@ -483,7 +483,6 @@ class FetchMap(object):
                 record_list.append({"stime":stime, "etime": etime, "rec":r, "hemi": hemi, "hemi_str": hemi_str})
             else:
                 if (stime >= start) and (etime <= end):
-                    print(r.keys())
                     record_list.append({"stime":stime, "etime": etime, "rec":r, "hemi": hemi, 
                                         "hemi_str": hemi_str})                
         o = []
