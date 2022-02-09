@@ -133,7 +133,7 @@ class SDCarto(GeoAxes):
         aacgm_coast = MultiLineString( new_i )
         return aacgm_coast
 
-    def mark_latitudes(self, lat_arr, lon_location=45, **kwargs):
+    def mark_latitudes(self, lat_arr, lon_location=90, **kwargs):
         """
         mark the latitudes
         Write down the latitudes on the map for labeling!

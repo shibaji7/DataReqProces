@@ -461,7 +461,7 @@ class FetchMap(object):
     
     def map_plot(self, rec, ftag):
         fname = ftag.format(date=rec["stime"].strftime("%Y%m%d-%H%M"), hemi=rec["hemi_str"][0].upper())
-        mp = MapPlot(rec)
+        mp = MapPlot(rec, hemi=rec["hemi_str"])
         mp.overlayHMB()
         mp.overlayCnvCntrs()
         mp.overlayMapFitVel()

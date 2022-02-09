@@ -29,6 +29,7 @@ import datetime as dt
 import argparse
 from dateutil import parser as prs
 import numpy as np
+import scipy as sp
 import pandas as pd
 import aacgmv2
 
@@ -73,18 +74,19 @@ class MapPlot(object):
         self.ax = self.fig.add_subplot(111, projection="sdcarto", map_projection = proj,
                                   coords=self.rec["coords"], plot_date=self.rec["stime"])
         self.ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
-        self.ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
+        if self.hemi == "north": self.ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
+        else: self.ax.set_extent([-180, 180, -90, -50], crs=cartopy.crs.PlateCarree())
         plt_lons = np.arange( 0, 361, 15 )
         mark_lons = np.arange( 0, 360, 15 )
-        plt_lats = np.arange(40,90,10)
+        plt_lats = np.arange(40,90,10) if self.hemi == "north" else np.arange(-90,-40,10)
         gl = self.ax.gridlines(crs=cartopy.crs.Geodetic(), linewidth=0.5)
         gl.xlocator = mticker.FixedLocator(plt_lons)
         gl.ylocator = mticker.FixedLocator(plt_lats)
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
         gl.n_steps = 90
-        self.ax.mark_latitudes(plt_lats, fontsize="small", color="k")
-        self.ax.mark_longitudes(plt_lons, fontsize="small", color="k")
+        self.ax.mark_latitudes(plt_lats, fontsize="small", color="darkred")
+        self.ax.mark_longitudes(plt_lons, fontsize="small", color="darkblue")
         self.ax.text(0.5, 0.95, self.date_string(), ha="center", va="center", 
                      transform=self.ax.transAxes, fontsize="medium")
         self.proj = proj
@@ -163,7 +165,7 @@ class MapPlot(object):
             map_color = colMap(norm(vel_mag[nn]))
             self.mapFitPltVec.append(self.ax.plot([xlon_start, xlon_end],
                                                     [ylat_start, ylat_end], 
-                                                    color=map_color, lw=0.8))
+                                                    color=map_color, lw=0.4))
         if pltColBar:
             ax = inset_axes(self.ax, width="3%", height="15%", loc="upper left")
             cbar = mpl.pyplot.colorbar(self.mapFitPltStrt[0], cax=ax, orientation="vertical")
@@ -179,7 +181,8 @@ class MapPlot(object):
                          transform=self.ax.transAxes, fontsize="xx-small")
         if pltModelBar:
             By, Bz = self.rec["rec"]["IMF.By"], self.rec["rec"]["IMF.Bz"]
-            lim = 10*(2+int(np.max(np.abs([By, Bz]))/10))
+            #lim = 15*(2+int(np.max(np.abs([By, Bz]))/15))
+            lim = 20
             ax = inset_axes(self.ax, width="15%", height="20%", loc="upper right")
             ax.axhline(0, ls="-", lw=0.4, color="k")
             ax.axvline(0, ls="-", lw=0.4, color="k")
@@ -222,10 +225,20 @@ class MapPlot(object):
         n_lat, n_lon = lat_cntr.ravel()[np.argmin(pot_arr)], lon_cntr.ravel()[np.argmin(pot_arr)]
         n_lat, n_lon = convert_to_map_lat_lon([n_lon], [n_lat], self.geo, self.proj)
         self.ax.text(n_lon[0], n_lat[0], "--", fontsize=9)
-        #pot_arr[np.abs(pot_arr)<.8] = np.nan
+        W = np.array([
+            [0, 0, 1, 0, 0],
+            [0, 1, 2, 1, 0],
+            [1, 2, 4, 2, 1],
+            [0, 1, 2, 1, 0],
+            [0, 0, 1, 0, 0]
+        ], dtype=np.float)
+        W = W / np.sum(W[:])
+        
+        #pot_arr[np.abs(pot_arr)<3] = 0
+        #pot_arr = sp.ndimage.filters.convolve(pot_arr, W, mode='constant')
         cp = self.ax.contour(XYZ[:,:,0], XYZ[:,:,1], pot_arr, colors=line_color, linewidths=line_width,
-                             locator=LinearLocator(12), transform=self.proj)
-        #self.ax.contourf(XYZ[:,:,0], XYZ[:,:,1], pot_arr, cmap=cm.jet, transform=self.proj)
+                             locator=LinearLocator(9), transform=self.proj)
+        self.ax.clabel(cp, inline=1, fontsize=4, fmt="%d", colors="darkblue")
         return
     
     def save(self, fname):
