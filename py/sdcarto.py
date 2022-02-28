@@ -7,6 +7,11 @@ from matplotlib.projections import register_projection
 import copy
 import datetime
 
+import pydarn
+import numpy as np
+
+import rad_fov
+
 
 class SDCarto(GeoAxes):
     name = "sdcarto"
@@ -235,7 +240,73 @@ class SDCarto(GeoAxes):
             self.text( locs.bounds[0]+.02*locs.bounds[0],locs.bounds[1]+.02*locs.bounds[1], 
                       marker_text, ha=ha, va=va, **kwargs)
         return
-
+    
+    
+    def to_aagcm(self, lat, lon):
+        if "aacgmv2" in self.coords: 
+            lat, lon, mlt = aacgmv2.get_aacgm_coord(lat, lon, 300, self.plot_date)
+            if self.coords == "aacgmv2_mlt": lon = mlt*15
+        return lat, lon
+    
+    def to_aagcms(self, lats, lons):
+        mlats, mlons = np.zeros_like(lats), np.zeros_like(lats)
+        if "aacgmv2" in self.coords: 
+            for i in range(lats.shape[0]):
+                mlats[i,:], mlons[i,:], mlt = aacgmv2.get_aacgm_coord_arr(lats[i,:], lons[i,:], 300, self.plot_date)
+                if self.coords == "aacgmv2_mlt": mlons[i,:] = mlt*15
+        else: mlats, mlons = lats, lons
+        return mlats, mlons
+    
+    def overlay_radar(self, rad_id, tx=cartopy.crs.PlateCarree(), marker="D", zorder=2, markerColor="m", markerSize=2, 
+                      fontSize="xx-small", font_color="m", xOffset=-5, yOffset=-1.5, annotate=True):
+        """ Adding the radar location """
+        self.hdw = pydarn.SuperDARNRadars.radars[rad_id].hardware_info
+        lat, lon = self.to_aagcm(self.hdw.geographic.lat, self.hdw.geographic.lon)        
+        self.scatter([lon], [lat], s=markerSize, marker=marker,
+                color=markerColor, zorder=zorder, transform=tx, lw=0.8, alpha=0.4)
+        nearby_rad = [["adw", "kod", "cve", "fhe", "wal", "gbr", "pyk", "aze", "sys"],
+                            ["ade", "ksr", "cvw", "fhw", "bks", "sch", "sto", "azw", "sye"]]
+        if annotate:
+            rad = self.hdw.abbrev
+            if rad in nearby_rad[0]: xOff, ha = 1.5 if not xOffset else xOffset, 0
+            elif rad in nearby_rad[1]: xOff, ha = -1.5 if not xOffset else xOffset, 1
+            else: xOff, ha = 0.0, 0.5
+            lat, lon = self.to_aagcm(self.hdw.geographic.lat+yOffset, self.hdw.geographic.lon+xOffset)
+            x, y = self.projection.transform_point(lon, lat, src_crs=tx)
+            self.text(x, y, rad.upper(), ha="center", va="center", transform=self.projection,
+                     fontdict={"color":font_color, "size":fontSize}, alpha=0.4)
+        return
+    
+    def overlay_fov(self, rad_id, tx=cartopy.crs.PlateCarree(), maxGate=100, rangeLimits=None, beamLimits=None,
+                    model="IS", fov_dir="front", fovColor=None, fovAlpha=0.2,
+                    fovObj=None, zorder=1, lineColor="k", lineWidth=0.2, ls="-"):
+        """ Overlay radar FoV """
+        self.maxGate = maxGate
+        lcolor = lineColor
+        from numpy import transpose, ones, concatenate, vstack, shape
+        self.hdw = pydarn.SuperDARNRadars.radars[rad_id].hardware_info
+        sgate = 0
+        egate = self.hdw.gates if not maxGate else maxGate
+        ebeam = self.hdw.beams
+        if beamLimits is not None: sbeam, ebeam = beamLimits[0], beamLimits[1]
+        else: sbeam = 0
+        self.rad_fov = rad_fov.CalcFov(hdw=self.hdw, ngates=egate)
+        latFull, lonFull = self.to_aagcms(self.rad_fov.latFull, self.rad_fov.lonFull)
+        xyz = self.projection.transform_points(tx, lonFull, latFull)
+        x, y = xyz[:, :, 0], xyz[:, :, 1]
+        contour_x = concatenate((x[sbeam, sgate:egate], x[sbeam:ebeam, egate],
+            x[ebeam, egate:sgate:-1],
+            x[ebeam:sbeam:-1, sgate]))
+        contour_y = concatenate((y[sbeam, sgate:egate], y[sbeam:ebeam, egate],
+            y[ebeam, egate:sgate:-1],
+            y[ebeam:sbeam:-1, sgate]))
+        self.plot(contour_x, contour_y, color=lcolor, zorder=zorder, linewidth=lineWidth, ls=ls, alpha=0.6)
+        if fovColor:
+            contour = transpose(vstack((contour_x, contour_y)))
+            polygon = Polygon(contour)
+            patch = PolygonPatch(polygon, facecolor=fovColor, edgecolor=fovColor, alpha=fovAlpha, zorder=zorder)
+            self.add_patch(patch)
+        return
 
         
 # Now register the projection with matplotlib so the user can select

@@ -85,7 +85,7 @@ class MapPlot(object):
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
         gl.n_steps = 90
-        self.ax.mark_latitudes(plt_lats, fontsize="small", color="darkred")
+        self.ax.mark_latitudes(plt_lats, fontsize="small", color="darkblue")
         self.ax.mark_longitudes(plt_lons, fontsize="small", color="darkblue")
         self.ax.text(0.5, 0.95, self.date_string(), ha="center", va="center", 
                      transform=self.ax.transAxes, fontsize="medium")
@@ -131,7 +131,7 @@ class MapPlot(object):
         return
     
     def overlayMapFitVel(self, pltColBar=True, pltModelBar=True, colorBarLabelSize="xx-small",
-                         colMap=cm.jet ):
+                         colMap=cm.hot ):
         norm = mpl.colors.Normalize(self.min_vel, self.maxVelPlot)
         mlats_plot = self.rec["vel_efield"]["mlats"]
         mlons_plot = self.rec["vel_efield"]["mlons"]
@@ -225,20 +225,17 @@ class MapPlot(object):
         n_lat, n_lon = lat_cntr.ravel()[np.argmin(pot_arr)], lon_cntr.ravel()[np.argmin(pot_arr)]
         n_lat, n_lon = convert_to_map_lat_lon([n_lon], [n_lat], self.geo, self.proj)
         self.ax.text(n_lon[0], n_lat[0], "--", fontsize=9)
-        W = np.array([
-            [0, 0, 1, 0, 0],
-            [0, 1, 2, 1, 0],
-            [1, 2, 4, 2, 1],
-            [0, 1, 2, 1, 0],
-            [0, 0, 1, 0, 0]
-        ], dtype=np.float)
-        W = W / np.sum(W[:])
-        
-        #pot_arr[np.abs(pot_arr)<3] = 0
-        #pot_arr = sp.ndimage.filters.convolve(pot_arr, W, mode='constant')
         cp = self.ax.contour(XYZ[:,:,0], XYZ[:,:,1], pot_arr, colors=line_color, linewidths=line_width,
                              locator=LinearLocator(9), transform=self.proj)
         self.ax.clabel(cp, inline=1, fontsize=4, fmt="%d", colors="darkblue")
+        return
+    
+    def set_radars(self):
+        import pydarn
+        date = self.rec["stime"]
+        for stid in self.rec["rec"]["stid"]:
+            self.ax.overlay_radar(stid)
+            #self.ax.overlay_fov(stid)
         return
     
     def save(self, fname):

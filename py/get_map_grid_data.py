@@ -465,6 +465,7 @@ class FetchMap(object):
         mp.overlayHMB()
         mp.overlayCnvCntrs()
         mp.overlayMapFitVel()
+        mp.set_radars()
         mp.save(fname)
         return
     

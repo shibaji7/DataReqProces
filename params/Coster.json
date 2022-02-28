@@ -1,0 +1,20 @@
+{
+    "__comments__": "",
+    "data_type": "mapex",
+    "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
+    "start_date": null,
+    "end_date": null,
+    "dates": ["2013-03-14", "2013-03-15", "2013-03-16", "2013-03-17", "2013-03-18", "2013-03-19", "2013-03-20"],
+    "hemis": ["north", "south"],
+    "scalers": [],
+    "vectors": [],
+    "pev_params": ["pot", "efield", "vel"],
+    "grid_params": {
+    },
+    "file_name_format": "{dn}.{hemi}.nc",
+    "cores": 24,
+    "pot_lat_min": 30,
+    "med_filt": {
+        "thresh": null
+    }
+}
