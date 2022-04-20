@@ -52,5 +52,5 @@ if __name__ == "__main__":
     for k in vars(args).keys():
         print("     " + k + "->" + str(vars(args)[k]))
     if args.data_type in ["fitacf"]: fetch_fit_level_data(args)
-    elif args.data_type in ["map", "grid", "cnvmap", "mapex"]: fetch_map_level_data(args)
+    elif args.data_type in ["map", "grid", "cnvmap", "mapex", "map2"]: fetch_map_level_data(args)
     os.system("rm -rf .empty __pycache__")

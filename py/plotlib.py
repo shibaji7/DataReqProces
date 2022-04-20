@@ -28,14 +28,153 @@ import numpy as np
 import pandas as pd
 import aacgmv2
 
-from get_fit_data import txt2csv
-
 import cartopy.crs as ccrs
 import cartopy
 import sdcarto
 
 import matplotlib.ticker as mticker
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+
+def convert_to_map_lat_lon(xs, ys, _from, _to):
+    lat, lon = [], []
+    for x, y in zip(xs, ys):
+        _lon, _lat = _to.transform_point(x, y, _from)
+        lat.append(_lat)
+        lon.append(_lon)
+    return lat, lon
+
+class MapPlot(object):
+    """
+    Plot data from map(ex) files
+    """
+
+    def __init__(self, rec, ax, hemi="north", maxVelScale=1000.0, min_vel=0.0, map_type="map"):
+        self.rec = rec
+        self.radEarth = 6371.0
+        self.lenFactor = 500.0
+        self.radEarthMtrs = self.radEarth * 1000.0
+        self.maxVelPlot = maxVelScale
+        self.min_vel = min_vel
+        self.hemi = hemi
+        self.ini_figure(ax)
+        self.overlayCnvCntrs()
+        return
+
+    def ini_figure(self, ax):
+        """
+        Instatitate figure and axes labels
+        """
+        proj = cartopy.crs.NorthPolarStereo() if self.hemi == "north" else cartopy.crs.SouthPolarStereo()
+        self.ax = ax
+        #self.fig = plt.figure(dpi=300, figsize=(3.5,3.5))
+        #self.ax = self.fig.add_subplot(111, projection="sdcarto", map_projection = proj,
+        #        coords=self.rec["coords"], plot_date=self.rec["stime"])
+        self.ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
+        if self.hemi == "north": self.ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
+        else: self.ax.set_extent([-180, 180, -90, -50], crs=cartopy.crs.PlateCarree())
+        plt_lons = np.arange( 0, 361, 15 )
+        mark_lons = np.arange( 0, 360, 15 )
+        plt_lats = np.arange(40,90,10) if self.hemi == "north" else np.arange(-90,-40,10)
+        gl = self.ax.gridlines(crs=cartopy.crs.Geodetic(), linewidth=0.5)
+        gl.xlocator = mticker.FixedLocator(plt_lons)
+        gl.ylocator = mticker.FixedLocator(plt_lats)
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+        gl.n_steps = 90
+        self.ax.mark_latitudes(plt_lats, fontsize="small", color="darkblue")
+        self.ax.mark_longitudes(plt_lons, fontsize="small", color="darkblue")
+        self.ax.text(0.5, 0.95, self.date_string(), ha="center", va="center",
+                transform=self.ax.transAxes, fontsize="medium")
+        self.proj = proj
+        self.geo = ccrs.Geodetic()
+        self.ax.text(-0.02, 0.99, "Coord: MLT", ha="center", va="top",
+                transform=self.ax.transAxes, fontsize="x-small", rotation=90)
+        model_details = ""
+        if "pot.drop" in self.rec.keys(): model_details += r"$\Phi_{pc}=%d$ kV"%(self.rec["rec"]["pot.drop"]/1e3) + "\n"
+        if "latmin" in self.rec.keys(): model_details += r"$\Lambda_{HM}=%d^{\circ}$"%np.min(self.rec["rec"]["latmin"]) + "\n"
+        if "vector.mlon" in self.rec.keys(): model_details += r"$N_{vc}=%d$"%len(self.rec["rec"]["vector.mlon"]) + "\n"
+        if "stid" in self.rec.keys(): model_details += r"$N_{rads}=%d$"%len(self.rec["rec"]["stid"])
+        self.ax.text(0.05, 0.05, model_details, ha="left", va="bottom",
+                transform=self.ax.transAxes, fontsize="small")
+        return
+
+    def date_string(self, label_style="web"):
+        # Set the date and time formats
+        dfmt = "%d/%b/%Y" if label_style == "web" else "%d %b %Y,"
+        tfmt = "%H:%M"
+        stime, etime = self.rec["stime"], self.rec["etime"]
+        date_str = "{:{dd} {tt}} -- ".format(stime, dd=dfmt, tt=tfmt)
+        if etime.date() == stime.date(): date_str = "{:s}{:{tt}} UT".format(date_str, etime, tt=tfmt)
+        else: date_str = "{:s}{:{dd} {tt}} UT".format(date_str, etime, dd=dfmt, tt=tfmt)
+        return date_str
+
+    def overlayHMB(self, hmbCol="Gray"):
+        xs, ys = 15*aacgmv2.convert_mlt(self.rec["boundary.mlon"], self.rec["stime"], m2a=False),\
+                self.rec["boundary.mlat"]
+        lat, lon = convert_to_map_lat_lon(xs, ys, self.geo, self.proj)
+        self.ax.plot(lon, lat, linewidth=0.8, linestyle="-", color="darkgreen", transform=self.proj)
+        self.ax.plot(lon, lat, linewidth=0.4, linestyle="--", color="k", zorder=4.0, transform=self.proj)
+        return
+
+    def overlayGridVel(self):
+        return
+    
+    def overlayMapModelVel(self, pltColBar=True, colorBarLabelSize="small", colMap=cm.jet):
+        return
+
+    def overlayMapFitVel(self, pltColBar=True, pltModelBar=True, colorBarLabelSize="xx-small",
+            colMap=cm.hot ):
+        return
+
+    def overlayCnvCntrs(self, zorder=2, line_color="k", line_width=0.6, font_size="small",
+            plot_label=True):
+        lat_cntr = self.rec["pot"]["lat_cntr"]
+        xs = self.rec["pot"]["lon_cntr"]
+        pot_arr = self.rec["pot"]["pot_arr"]
+        lon_cntr = np.zeros_like(xs)
+        for i in range(xs.shape[0]):
+            lon_cntr[i,:] = 15*aacgmv2.convert_mlt(xs[i,:], self.rec["stime"], m2a=False)
+        XYZ = self.proj.transform_points(self.geo, lon_cntr, lat_cntr)
+        p_lat, p_lon = lat_cntr.ravel()[np.argmax(pot_arr)], lon_cntr.ravel()[np.argmax(pot_arr)]
+        p_lat, p_lon = convert_to_map_lat_lon([p_lon], [p_lat], self.geo, self.proj)
+        self.ax.text(p_lon[0], p_lat[0], "+", fontsize=9)
+        n_lat, n_lon = lat_cntr.ravel()[np.argmin(pot_arr)], lon_cntr.ravel()[np.argmin(pot_arr)]
+        n_lat, n_lon = convert_to_map_lat_lon([n_lon], [n_lat], self.geo, self.proj)
+        self.ax.text(n_lon[0], n_lat[0], "--", fontsize=9)
+        cp = self.ax.contour(XYZ[:,:,0], XYZ[:,:,1], pot_arr, colors=line_color, linewidths=line_width,
+                locator=LinearLocator(9), transform=self.proj)
+        self.ax.clabel(cp, inline=1, fontsize=4, fmt="%d", colors="darkblue")
+        return
+
+
+def txt2csv(fname="tmp/pot.txt", linestart=13):
+    """
+    Convert potential data to csv for plotting.
+    """
+    o = []
+    with open(fname, "r") as f: lines = f.readlines()[linestart:]
+    for l in lines:
+        l = list(filter(None, l.split(" ")))
+        d = l[9].replace("\n", "")
+        x = dict(
+                    mlat = float(l[2]),
+                    mlon = float(l[3]),
+                    EField_north = float(l[4]),
+                    EField_east = float(l[5]),
+                    Fitted_Vel_North = float(l[6]),
+                    Fitted_Vel_East = float(l[7]),
+                    Potential = float(l[8]),
+                    date = dt.datetime.strptime(d, "%Y-%m-%d/%H:%M:%S")
+                )
+        o.append(x)
+    o = pd.DataFrame.from_records(o)
+    return o
+
 
 def get_gridded_parameters(q, xparam, yparam, zparam, r=0, rounding=False):
     """
@@ -108,49 +247,56 @@ def add_axes(fig, num, proj, coords, date, vlim, nlim, ty):
     ax.text(1.05, 0.99, ty, ha="center", va="top", transform=ax.transAxes)
     return ax, bounds, norm, cmap
 
-def plot_map_grid_level_data(args):
-    print(f" Plot operations- {args.plot_type}")
-    ds = xarray.open_dataset(args.nc_file)
+
+def parse_NETCDF_file(fname, sdate):
+    print(f" Parse NETCDF files {fname}")
+    ds = xarray.open_dataset(fname)
     stime = [dt.datetime.utcfromtimestamp( (d - np.datetime64("1970-01-01T00:00:00Z","s")) / np.timedelta64(1, "s"))
             for d in ds.coords["fparam.stime"].values]
     etime = [dt.datetime.utcfromtimestamp( (d - np.datetime64("1970-01-01T00:00:00Z","s")) / np.timedelta64(1, "s"))
             for d in ds.coords["fparam.etime"].values]
-    t_id = stime.index(args.sdate)
+    t_id = stime.index(sdate)
+    lat, lon = ds.coords["fparam.lat_pot"].values, ds.coords["fparam.lon_pot"].values
+    pot = ds.data_vars["fparam.pot_arr"].values[t_id,:,:]
+    return lat, lon, pot
+
+def plot_map_grid_level_data(args):
+    print(f" Plot operations- {args.plot_type}")
+    dat = {}
+    if args.nc_file and os.path.exists(args.nc_file): dat["lat"], dat["lon"], dat["pot"] = parse_NETCDF_file(args.nc_file, args.sdate)
+    if args.ascii_file and os.path.exists(args.ascii_file): dat["o"] = txt2csv(args.ascii_file)
     geodetic = ccrs.Geodetic()
     orthographic = ccrs.NorthPolarStereo()
     for p in args.plot_types:    
         if p == "pot":
+            comp = True if (("o" in dat.keys()) and ("pot" in dat.keys())) else False
             vlim, sep = [-40,40], 21
-            if args.comp is not None: 
-                fig = plt.figure(dpi=150, figsize=(8,4))
-                ax0, _, _, _ = add_axes(fig, 121, orthographic, args.coords, args.sdate, vlim, sep, "py")
-                ax1, bounds, norm, cmap = add_axes(fig, 122, orthographic, args.coords, args.sdate, vlim, sep, "web")
+            rec = {"pot": {}, "stime":args.sdate, "etime": args.edate, "coords":args.coords}
+            if comp:
+                fig = plt.figure(dpi=300, figsize=(8,4))
+                ax0 = fig.add_subplot(121, projection="sdcarto", map_projection = orthographic,
+                        coords=args.coords, plot_date=args.sdate)
+                ax1 = fig.add_subplot(122, projection="sdcarto", map_projection = orthographic,
+                        coords=args.coords, plot_date=args.sdate)
             else: 
-                fig = plt.figure(dpi=150, figsize=(4,4))
-                ax0, bounds, norm, cmap = add_axes(fig, 111, orthographic, args.coords, args.sdate, vlim, sep, "py")
-            
-            lat, lon = ds.coords["fparam.lat_pot"].values, ds.coords["fparam.lon_pot"].values
-            
-            if args.coords == "geo":
-                lon = np.mod( (lon + 180), 360 ) - 180
-                glat, glon = np.zeros_like(lat), np.zeros_like(lon)
-                for i in range(lat.shape[0]):
-                    glat[i,:], glon[i,:], _ = aacgmv2.convert_latlon_arr(lat[i,:], lon[i,:], 300, args.sdate ,"A2G")
-                lat, lon = glat, glon
-            pot = ds.data_vars["fparam.pot_arr"].values[t_id,:,:]
-            XYZ = orthographic.transform_points(geodetic, lon, lat)
-            ax0.contourf(XYZ[:,:,0], XYZ[:,:,1], pot, cmap=cmap, vmax=vlim[1], 
-                        vmin=vlim[0], transform=orthographic, alpha=0.8)
-            if args.comp is None: _add_colorbar(fig, ax0, bounds, cmap, r"Potential ($\Phi_{pc}$), kV")
-            else:
-                o = txt2csv(args.comp)
-                mlat, mlon, mpot = get_gridded_parameters(o, "mlat", "mlon", "Potential")
+                fig = plt.figure(dpi=300, figsize=(4,4))
+                ax0 = fig.add_subplot(111, projection="sdcarto", map_projection = orthographic,
+                        coords=args.coords, plot_date=args.sdate)
+            if comp:
+                rec["pot"]["lat_cntr"], rec["pot"]["lon_cntr"], rec["pot"]["pot_arr"] = dat["lat"], dat["lon"], dat["pot"]
+                mp = MapPlot(rec, ax0)
+                mlat, mlon, mpot = get_gridded_parameters(dat["o"], "mlat", "mlon", "Potential")
                 mpot /= 1000.
-                XYZ = orthographic.transform_points(geodetic, mlon, mlat)
-                ax1.contourf(XYZ[:,:,0], XYZ[:,:,1], mpot, cmap=cmap, vmax=vlim[1], 
-                        vmin=vlim[0], transform=orthographic, alpha=0.8)
-                _add_colorbar(fig, ax1, bounds, cmap, r"Potential ($\Phi_{pc}$), kV")
-            
+                rec["pot"]["lat_cntr"], rec["pot"]["lon_cntr"], rec["pot"]["pot_arr"] = mlat, mlon, mpot
+                mp = MapPlot(rec, ax1)
+            elif ("pot" in dat.keys()):
+                rec["pot"]["lat_cntr"], rec["pot"]["lon_cntr"], rec["pot"]["pot_arr"] = dat["lat"], dat["lon"], dat["pot"]
+                mp = MapPlot(rec, ax0)
+            elif ("o" in dat.keys()):
+                mlat, mlon, mpot = get_gridded_parameters(dat["o"], "mlat", "mlon", "Potential")
+                mpot /= 1000.
+                rec["pot"]["lat_cntr"], rec["pot"]["lon_cntr"], rec["pot"]["pot_arr"] = mlat, mlon, mpot
+                mp = MapPlot(rec, ax0)
         fname = "tmp/%s.%s.png"%(args.sdate.strftime("%Y%m%dT%H%M"), p)
         fig.savefig(fname)
         plt.close()
@@ -158,12 +304,12 @@ def plot_map_grid_level_data(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-nc", "--nc_file", default="tmp/Lulu/20101011.1200-1500.north.nc", help="netCDF File name")
+    parser.add_argument("-nc", "--nc_file", default=None, help="netCDF File name", type=str)
     parser.add_argument("-s", "--sdate", default=dt.datetime(2010,10,11,13,34), help="Start date to plot", type=prs.parse)
     parser.add_argument("-e", "--edate", default=dt.datetime(2010,10,11,15), help="End date to plot", type=prs.parse)
     parser.add_argument("-p", "--plot_type", default="pot", help="Plot types", type=str)
-    parser.add_argument("-c", "--coords", default="aacgmv2", help="Coordinate types [geo, aacgmv2, aacgmv2_mlt]", type=str)
-    parser.add_argument("-cp", "--comp", default=None, help="Comparison file", type=str)
+    parser.add_argument("-c", "--coords", default="aacgmv2_mlt", help="Coordinate types [aacgmv2, aacgmv2_mlt]", type=str)
+    parser.add_argument("-af", "--ascii_file", default="tmp/pot.txt", help="ASCII File", type=str)
     args = parser.parse_args()
     args.plot_types = args.plot_type.split(",")
     for k in vars(args).keys():

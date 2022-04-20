@@ -1,12 +1,12 @@
 {
-    "__comments__": "2013-03-14, 2013-03-15, 2013-03-16, 2013-03-17, 2013-03-18, 2013-03-19, 2013-03-20",
-    "data_type": "map2",
+    "__comments__": "",
+    "data_type": "mapex",
     "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
-    "start_date": "2013-03-17",
-    "end_date": "2013-03-17T01",
-    "dates": [],
-    "hemis": ["north", "south"],
-    "scalers": [],
+    "start_date": null,
+    "end_date": null,
+    "dates": ["2013-01-09"],
+    "hemis": ["north"],
+    "scalers": ["pot.drop"],
     "vectors": [],
     "pev_params": ["pot", "efield", "vel"],
     "grid_params": {
@@ -16,5 +16,8 @@
     "pot_lat_min": 30,
     "med_filt": {
         "thresh": null
+    },
+    "plots":{
+        "map": null
     }
 }
