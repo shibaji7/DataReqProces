@@ -552,10 +552,13 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
         hemi.append(i["hemi_str"])
         if ("pot" in pev_params) and (j==0):  pot_arr_shape = i["pot"]["pot_arr"].shape
         if ("efield" in pev_params) or ("vel" in pev_params): 
-            max_ev_len = max_ev_len if max_ev_len >= len(i["vel_efield"]["mlons"]) else len(i["vel_efield"]["mlons"])
+            max_ev_len = max_ev_len if max_ev_len >= len(i["vel_efield"]["mlons"])\
+                    else len(i["vel_efield"]["mlons"])
+    print(stime, etime)
     stime, etime, hemi = list(set(stime)), list(set(etime)), list(set(hemi))
     stime.sort()
     etime.sort()
+    print(stime, etime)
     
     if "pot" in pev_params:
         pot_arr, lat_cntr, lon_cntr = np.zeros((len(stime), pot_arr_shape[0], pot_arr_shape[1])), None, None
