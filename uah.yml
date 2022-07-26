@@ -167,11 +167,17 @@ dependencies:
   - pip:
     - aacgmv2==2.6.0
     - cached-property==1.5.2
+    - cdflib==0.4.4
     - deepdish==0.3.7
+    - descartes==1.1.0
+    - eoxmagmod==0.9.10
+    - ffnet==0.8.4
     - h5py==3.5.0
     - matplotlib==3.4.3
+    - networkx==2.6.3
     - numexpr==2.7.3
     - pathlib2==2.3.6
     - pydarn==2.2
     - pydarnio==1.1.0
+    - spacepy==0.2.3
     - tables==3.6.1

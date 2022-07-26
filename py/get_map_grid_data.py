@@ -153,13 +153,14 @@ class FetchMap(object):
         map data (basically coefficients of the fit)
         """
         stime, etime, hemi, r = rec["stime"], rec["etime"], rec["hemi"], rec["rec"]
+        
         if "vector.mlat" in r:
             hemi_str = "north" if hemi==1 else "south"
 
             # get the standard location/LoS(grid) Vel parameters.
             mlats, mlons = r["vector.mlat"], r["vector.mlon"] 
             vels, azms = r["vector.vel.median"], r["vector.kvect"]
-
+            
             # Some important parameters from fitting.
             coeff_fit = np.array(r["N+2"])
             order_fit = r["fit.order"]
@@ -339,6 +340,7 @@ class FetchMap(object):
 
             # get the standard location parameters.
             mlats, mlons = r["vector.mlat"], r["vector.mlon"]
+            
             # Some important parameters from fitting.
             coeff_fit = np.array(r["N+2"])
             order_fit = r["fit.order"]
@@ -444,6 +446,7 @@ class FetchMap(object):
         Compute E-field and Pot
         """
         print(f" Processing vel, eField, and pot for [{rec['hemi_str']}]: {rec['stime']}-to-{rec['etime']}")
+        rec["N_rads"], rec["N_vecs"] = rec["rec"]["stid"], rec["rec"]["nvec"]
         if "efield" in pev_params or "vel" in pev_params: 
             mlats, mlons, vel_mag, vel_azm, efield_fit = self.calcFitCnvVel(rec)
             rec["vel_efield"] = {}
@@ -544,9 +547,11 @@ def to_xarray_grd(so, ro, grid_params, var, crds, atrs):
     return var, crds, atrs
 
 def to_xarray_pev(o, pev_params, var, crds, atrs):
-    stime, etime, hemi = [], [], []
+    stime, etime, hemi, N_vecs, N_rads = [], [], [], [], []
     max_ev_len = 0
     for j, i in enumerate(o):
+        N_vecs.append(i["N_vecs"])
+        N_rads.append(i["N_rads"])
         stime.append(i["stime"])
         etime.append(i["etime"])
         hemi.append(i["hemi_str"])
@@ -554,11 +559,11 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
         if ("efield" in pev_params) or ("vel" in pev_params): 
             max_ev_len = max_ev_len if max_ev_len >= len(i["vel_efield"]["mlons"])\
                     else len(i["vel_efield"]["mlons"])
-    print(stime, etime)
+    
     stime, etime, hemi = list(set(stime)), list(set(etime)), list(set(hemi))
     stime.sort()
     etime.sort()
-    print(stime, etime)
+    N_vecs, N_rads = np.array(N_vecs), np.array(N_rads)
     
     if "pot" in pev_params:
         pot_arr, lat_cntr, lon_cntr = np.zeros((len(stime), pot_arr_shape[0], pot_arr_shape[1])), None, None
@@ -584,6 +589,10 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
     crds["fparam.hemisphere"] = ("fparam.hemi", hemi)
     crds["fparam.stime"] = ("fparam.time", stime)
     crds["fparam.etime"] = ("fparam.time", etime)
+    crds["fparam.rads"] = ("fparam.rads", np.arange(N_rads.shape[1]))
+    
+    var["fparam.N_rads"] = (["fparam.time", "fparam.rads"], N_rads)
+    var["fparam.N_vecs"] = (["fparam.time", "fparam.rads"], N_vecs)
     
     if "pot" in pev_params: 
         crds["fparam.lat_pot"] = (["fparam.pot_x","fparam.pot_y"], lat_cntr.astype(int))
@@ -611,5 +620,7 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
     atrs["fparam.etime"] = "end time [datetime]"
     atrs["fparam.lat_pot"] = "magnetic latitudes [degrees; for fitted potentials]"
     atrs["fparam.lon_pot"] = "magnetic longitudes [degrees; for fitted potentials]"
-    atrs["fparam.pot_arr"] = " fitted potential [kV]"            
+    atrs["fparam.pot_arr"] = "fitted potential [kV]"            
+    atrs["fparam.N_rads"] = "array of number of radar station IDs"            
+    atrs["fparam.N_vecs"] = "array of number of associated vectors against each ID"            
     return var, crds, atrs

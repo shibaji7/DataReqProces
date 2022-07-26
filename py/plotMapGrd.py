@@ -70,15 +70,15 @@ class MapPlot(object):
         """
         proj = cartopy.crs.NorthPolarStereo() if self.hemi == "north" else cartopy.crs.SouthPolarStereo()
         
-        self.fig = plt.figure(dpi=300, figsize=(3.5,3.5))
+        self.fig = plt.figure(dpi=300, figsize=(3,3))
         self.ax = self.fig.add_subplot(111, projection="sdcarto", map_projection = proj,
                                   coords=self.rec["coords"], plot_date=self.rec["stime"])
         self.ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
         if self.hemi == "north": self.ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
-        else: self.ax.set_extent([-180, 180, -90, -50], crs=cartopy.crs.PlateCarree())
+        else: self.ax.set_extent([-180, 180, -90, -60], crs=cartopy.crs.PlateCarree())
         plt_lons = np.arange( 0, 361, 15 )
         mark_lons = np.arange( 0, 360, 15 )
-        plt_lats = np.arange(40,90,10) if self.hemi == "north" else np.arange(-90,-40,10)
+        plt_lats = np.arange(40,90,10) if self.hemi == "north" else np.arange(-90,-50,10)
         gl = self.ax.gridlines(crs=cartopy.crs.Geodetic(), linewidth=0.5)
         gl.xlocator = mticker.FixedLocator(plt_lons)
         gl.ylocator = mticker.FixedLocator(plt_lats)

@@ -1,12 +1,11 @@
 {
-    "__comments__": "2013-03-14, 2013-03-15, 2013-03-16, 2013-03-17, 2013-03-18, 2013-03-19, 2013-03-20",
+    "__comments__": "",
     "data_type": "map2",
     "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
     "start_date": null,
     "end_date": null,
-    "dates": ["2013-03-15", "2013-03-17", "2013-03-14", "2013-03-16", "2013-03-18", "2013-03-19" , "2013-03-20"
-              "2022-04-01"],
-    "hemis": ["north", "south"],
+    "dates": ["2015-03-17", "2015-03-18"],
+    "hemis": ["north"],
     "scalers": [],
     "vectors": [],
     "pev_params": ["pot", "efield", "vel"],
