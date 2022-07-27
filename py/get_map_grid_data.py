@@ -446,7 +446,7 @@ class FetchMap(object):
         Compute E-field and Pot
         """
         print(f" Processing vel, eField, and pot for [{rec['hemi_str']}]: {rec['stime']}-to-{rec['etime']}")
-        rec["N_rads"], rec["N_vecs"] = rec["rec"]["stid"], rec["rec"]["nvec"]
+        rec["N_rads"], rec["N_vecs"] = len(rec["rec"]["stid"]), np.sum(rec["rec"]["nvec"])
         if "efield" in pev_params or "vel" in pev_params: 
             mlats, mlons, vel_mag, vel_azm, efield_fit = self.calcFitCnvVel(rec)
             rec["vel_efield"] = {}
@@ -563,7 +563,6 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
     stime, etime, hemi = list(set(stime)), list(set(etime)), list(set(hemi))
     stime.sort()
     etime.sort()
-    N_vecs, N_rads = np.array(N_vecs), np.array(N_rads)
     
     if "pot" in pev_params:
         pot_arr, lat_cntr, lon_cntr = np.zeros((len(stime), pot_arr_shape[0], pot_arr_shape[1])), None, None
@@ -589,10 +588,11 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
     crds["fparam.hemisphere"] = ("fparam.hemi", hemi)
     crds["fparam.stime"] = ("fparam.time", stime)
     crds["fparam.etime"] = ("fparam.time", etime)
-    crds["fparam.rads"] = ("fparam.rads", np.arange(N_rads.shape[1]))
+    crds["fparam.n_rads"] = ("fparam.time", N_rads)
+    crds["fparam.n_vecs"] = ("fparam.time", N_vecs)
     
-    var["fparam.N_rads"] = (["fparam.time", "fparam.rads"], N_rads)
-    var["fparam.N_vecs"] = (["fparam.time", "fparam.rads"], N_vecs)
+    var["fparam.N_rads"] = (["fparam.time"], N_rads)
+    var["fparam.N_vecs"] = (["fparam.time"], N_vecs)
     
     if "pot" in pev_params: 
         crds["fparam.lat_pot"] = (["fparam.pot_x","fparam.pot_y"], lat_cntr.astype(int))
@@ -621,6 +621,6 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
     atrs["fparam.lat_pot"] = "magnetic latitudes [degrees; for fitted potentials]"
     atrs["fparam.lon_pot"] = "magnetic longitudes [degrees; for fitted potentials]"
     atrs["fparam.pot_arr"] = "fitted potential [kV]"            
-    atrs["fparam.N_rads"] = "array of number of radar station IDs"            
-    atrs["fparam.N_vecs"] = "array of number of associated vectors against each ID"            
+    atrs["fparam.n_rads"] = "number of radar station"            
+    atrs["fparam.n_vecs"] = "number of associated data vectors"            
     return var, crds, atrs
