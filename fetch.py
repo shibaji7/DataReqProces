@@ -15,6 +15,7 @@ import os
 import datetime as dt
 import argparse
 from dateutil import parser as prs
+from zenodo import Zenodo
 
 import json
 
@@ -53,4 +54,5 @@ if __name__ == "__main__":
         print("     " + k + "->" + str(vars(args)[k]))
     if args.data_type in ["fitacf"]: fetch_fit_level_data(args)
     elif args.data_type in ["map", "grid", "cnvmap", "mapex", "map2"]: fetch_map_level_data(args)
+    Zenodo(args.param_file_name)
     os.system("rm -rf .empty __pycache__")
