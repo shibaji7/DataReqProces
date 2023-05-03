@@ -92,8 +92,11 @@ def fetch_map_level_data(args):
                 if len(args.pev_params) > 0: obj["pev_o"] = fm.calcFitCnvs(start, end, args.pot_lat_min,
                                                                            args.cores, args.pev_params, 
                                                                            args.plots)
-                ds = to_xarray(obj, args.pev_params, args.scalers, args.vectors, args.grid_params)
-                ds.to_netcdf(fname)
+                if ".csv" in fname:
+                    obj["sv_o"].to_csv(fname, index=False, header=True)
+                else:
+                    ds = to_xarray(obj, args.pev_params, args.scalers, args.vectors, args.grid_params)
+                    ds.to_netcdf(fname)
                 os.system("rm -rf raw/*")
             gc.collect()
     return

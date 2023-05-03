@@ -74,7 +74,7 @@ class MapPlot(object):
         self.ax = self.fig.add_subplot(111, projection="sdcarto", map_projection = proj,
                                   coords=self.rec["coords"], plot_date=self.rec["stime"])
         self.ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
-        if self.hemi == "north": self.ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
+        if self.hemi == "north": self.ax.set_extent([-180, 180, 40, 90], crs=cartopy.crs.PlateCarree())
         else: self.ax.set_extent([-180, 180, -90, -60], crs=cartopy.crs.PlateCarree())
         plt_lons = np.arange( 0, 361, 15 )
         mark_lons = np.arange( 0, 360, 15 )
@@ -196,10 +196,13 @@ class MapPlot(object):
                 ax.arrow(x=0, y=0, dx=By, dy=Bz, width=w, head_width=w*7, 
                          head_length=w*5, color="darkred")
             else: lim = 10.
-            model_txt = "OMNI IMF\n"+ "Stat Mod: RG96\n"\
-                        + self.rec["rec"]["model.angle"] + ", " + r"$%s$"%self.rec["rec"]["model.level"]
+            Bang = r"$\theta=%s$"%(self.rec["rec"]["model.angle"].replace("Bang", "").replace("deg.", "^\circ"))
+            Esw = r"$E_{sw}=%s$"%(self.rec["rec"]["model.level"].replace("Esw", ""))
+            model_txt = "OMNI IMF\n"+ "Stat Mod: TS18\n"\
+                        + Bang + "\n" + Esw
+            print(self.rec["rec"]["model.angle"], self.rec["rec"]["model.level"], self.rec["rec"].keys())
             self.ax.text(0.9, 0.75, model_txt, ha="center", va="top", 
-                     transform=self.ax.transAxes, fontsize=4, color="darkred")
+                     transform=self.ax.transAxes, fontsize=5, color="darkred")
             ax.text(0.9, 0.4, "+Y", ha="center", va="center", 
                     transform=ax.transAxes, fontsize=3.5, color="darkred")
             ax.text(0.6, 0.95, "+Z (%d nT)"%lim, ha="left", va="center", 
@@ -210,7 +213,7 @@ class MapPlot(object):
             ax.set_yticks([])
         return
     
-    def overlayCnvCntrs(self, zorder=2, line_color="k", line_width=0.6, font_size="small", 
+    def overlayCnvCntrs(self, zorder=2, line_color="k", line_width=0.4, font_size="small", 
                         plot_label=True):
         lat_cntr = self.rec["pot"]["lat_cntr"]
         xs = self.rec["pot"]["lon_cntr"]
@@ -226,7 +229,7 @@ class MapPlot(object):
         n_lat, n_lon = convert_to_map_lat_lon([n_lon], [n_lat], self.geo, self.proj)
         self.ax.text(n_lon[0], n_lat[0], "--", fontsize=9)
         cp = self.ax.contour(XYZ[:,:,0], XYZ[:,:,1], pot_arr, colors=line_color, linewidths=line_width,
-                             locator=LinearLocator(9), transform=self.proj)
+                             locator=LinearLocator(9), transform=self.proj, alpha=0.6)
         self.ax.clabel(cp, inline=1, fontsize=4, fmt="%d", colors="darkblue")
         return
     

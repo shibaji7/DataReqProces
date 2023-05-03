@@ -2,22 +2,21 @@
     "__comments__": "",
     "data_type": "map2",
     "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
-    "start_date": "2012-06-16T09:50",
-    "end_date": "2012-06-16T10:10",
-    "dates": [],
-    "hemis": ["south"],
-    "scalers": [],
+    "start_date": null,
+    "end_date": null,
+    "dates": ["2021-10-28", "2021-11-03", "2021-11-04", "2021-11-05", "2021-11-06"],
+    "hemis": ["north", "south"],
+    "scalers": ["pot.drop"],
     "vectors": [],
-    "pev_params": ["pot", "efield", "vel"],
+    "pev_params": [],
     "grid_params": {
+        "summary": [],
+        "records": []
     },
     "file_name_format": "{dn}.{hemi}.nc",
     "cores": 24,
     "pot_lat_min": 30,
     "med_filt": {
         "thresh": null
-    },
-    "plots":{
-        "map": "tmp/Jianjun/{date}.{hemi}.png"
     }
 }

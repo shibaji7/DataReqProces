@@ -1,4 +1,4 @@
-"""fetch.py: Module is dedicated of data fetching using pydarn module"""
+"""fetch_pydarn.py: Module is dedicated of data fetching using pydarn module"""
 
 __author__ = "Chakraborty, S."
 __copyright__ = ""
@@ -15,11 +15,8 @@ import os
 import datetime as dt
 import argparse
 from dateutil import parser as prs
-from zenodo import Zenodo
 
 import json
-
-from fetch_data import fetch_fit_level_data, fetch_map_level_data
 
 def load_param_json(param_file_name):
     print(f" Read param file params/{param_file_name}.json")
@@ -52,7 +49,5 @@ if __name__ == "__main__":
         setattr(args, k, o[k])
     for k in vars(args).keys():
         print("     " + k + "->" + str(vars(args)[k]))
-    if args.data_type in ["fitacf"]: fetch_fit_level_data(args)
-    elif args.data_type in ["map", "grid", "cnvmap", "mapex", "map2"]: fetch_map_level_data(args)
-    #Zenodo(args.param_file_name)
+    if args.data_type in ["mapex", "map2"]: fetch_map_level_data(args)
     os.system("rm -rf .empty __pycache__")

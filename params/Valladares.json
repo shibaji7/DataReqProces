@@ -1,13 +1,13 @@
 {
-    "__comments__": "2015-03-17, 2015-03-18, 2017-05-27, 2017-05-28, 2017-05-29, 2017-07-16, 2017-07-17, 2017-07-18, 2017-09-07, 2017-09-08, 2017-09-09",
+    "__comments__": "",
     "data_type": "map2",
     "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
-    "start_date": "2017-09-08T15",
-    "end_date": "2017-09-08T15:10",
-    "dates": [
-    ],
+    "start_date": null,
+    "end_date": null,
+    "pydarn": true,
+    "dates": ["2009-12-1"],
     "hemis": ["north"],
-    "scalers": ["pot.drop"],
+    "scalers": [],
     "vectors": [],
     "pev_params": ["pot", "efield", "vel"],
     "grid_params": {
@@ -19,6 +19,6 @@
         "thresh": null
     },
     "plots":{
-        "map": "tmp/Sai/{date}.{hemi}.png"
+        "map": "tmp/Valladares/{date}.{hemi}.png"
     }
 }
