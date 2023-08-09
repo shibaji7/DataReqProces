@@ -1,13 +1,10 @@
 {
-    "__comments__": "2015-03-17, 2015-03-18, 2017-05-27, 2017-05-28, 2017-05-29, 2017-07-16, 2017-07-17, 2017-07-18, 2017-09-07, 2017-09-08, 2017-09-09",
+    "__comments__": "2013-01-08T20:30/2013-01-08T20:34; 2013-01-08T21:28/2013-01-08T21:32",
     "data_type": "map2",
     "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
-    "start_date": null,
-    "end_date": null,
-    "dates": [
-        "2017-09-07",
-        "2017-09-08"
-    ],
+    "start_date": "2013-01-08T20:30",
+    "end_date": "2013-01-08T20:34",
+    "dates": [],
     "hemis": ["north"],
     "scalers": ["pot.drop"],
     "vectors": [],
@@ -19,5 +16,8 @@
     "pot_lat_min": 40,
     "med_filt": {
         "thresh": null
+    },
+    "plots":{
+        "map": "tmp/PrikrylP/{date}.{hemi}.png"
     }
 }

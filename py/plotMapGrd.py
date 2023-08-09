@@ -74,11 +74,11 @@ class MapPlot(object):
         self.ax = self.fig.add_subplot(111, projection="sdcarto", map_projection = proj,
                                   coords=self.rec["coords"], plot_date=self.rec["stime"])
         self.ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
-        if self.hemi == "north": self.ax.set_extent([-180, 180, 40, 90], crs=cartopy.crs.PlateCarree())
+        if self.hemi == "north": self.ax.set_extent([-180, 180, 50, 90], crs=cartopy.crs.PlateCarree())
         else: self.ax.set_extent([-180, 180, -90, -60], crs=cartopy.crs.PlateCarree())
         plt_lons = np.arange( 0, 361, 15 )
         mark_lons = np.arange( 0, 360, 15 )
-        plt_lats = np.arange(40,90,10) if self.hemi == "north" else np.arange(-90,-50,10)
+        plt_lats = np.arange(50,90,10) if self.hemi == "north" else np.arange(-90,-50,10)
         gl = self.ax.gridlines(crs=cartopy.crs.Geodetic(), linewidth=0.5)
         gl.xlocator = mticker.FixedLocator(plt_lons)
         gl.ylocator = mticker.FixedLocator(plt_lats)
@@ -99,9 +99,9 @@ class MapPlot(object):
         if "latmin" in self.rec["rec"].keys():
             model_details += r"$\Lambda_{HM}=%d^{\circ}$"%np.min(self.rec["rec"]["latmin"]) + "\n"
         if "vector.mlon" in self.rec["rec"].keys():
-            model_details += r"$N_{vc}=%d$"%len(self.rec["rec"]["vector.mlon"]) + "\n"
-        if "stid" in self.rec["rec"].keys():
-            model_details += r"$N_{rads}=%d$"%len(self.rec["rec"]["stid"])
+            model_details += r"$N_{vc}=%d$"%len(self.rec["rec"]["vector.mlon"]) #+ "\n"
+        #if "stid" in self.rec["rec"].keys():
+        #    model_details += r"$N_{rads}=%d$"%len(self.rec["rec"]["stid"])
         self.ax.text(0.05, 0.05, model_details, ha="left", va="bottom", 
                      transform=self.ax.transAxes, fontsize="small")
         return
@@ -237,7 +237,8 @@ class MapPlot(object):
         import pydarn
         date = self.rec["stime"]
         for stid in self.rec["rec"]["stid"]:
-            self.ax.overlay_radar(stid)
+            pass
+            #self.ax.overlay_radar(stid)
             #self.ax.overlay_fov(stid)
         return
     

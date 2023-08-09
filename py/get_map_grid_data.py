@@ -29,6 +29,7 @@ from plotMapGrd import MapPlot
 
 import multiprocessing as mp
 from functools import partial
+import aacgmv2
 
 class FetchMap(object):
     """
@@ -457,9 +458,18 @@ class FetchMap(object):
             rec["pot"] = {}
             lat_cntr, lon_cntr, pot_arr = self.calcCnvPots(rec, pot_lat_min)
             rec["pot"]["lat_cntr"], rec["pot"]["lon_cntr"], rec["pot"]["pot_arr"] = lat_cntr, lon_cntr, pot_arr
+            rec = self.to_mlt(rec)
         rec["coords"] = "aacgmv2_mlt"
         if (len(plots) > 0) and ("map" in plots.keys()) and plots["map"]: self.map_plot(rec, plots["map"]) 
         del rec["rec"]
+        return rec
+    
+    def to_mlt(self, rec):
+        """
+        Convert aacgmv2_mlt coordinate
+        """
+        mlt = aacgmv2.convert_mlt(rec["pot"]["lon_cntr"].ravel(), rec["stime"])
+        rec["pot"]["mlt_cntr"] = np.reshape(mlt, rec["pot"]["lon_cntr"].shape)
         return rec
     
     def map_plot(self, rec, ftag):
@@ -573,7 +583,7 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
         if "efield" in pev_params: efield_fit = np.zeros((len(stime), 2, max_ev_len))
     for j, i in enumerate(o):
         if "pot" in pev_params:
-            if j == 0: lat_cntr, lon_cntr = i["pot"]["lat_cntr"], i["pot"]["lon_cntr"]
+            if j == 0: lat_cntr, lon_cntr, mlt_cntr = i["pot"]["lat_cntr"], i["pot"]["lon_cntr"], i["pot"]["mlt_cntr"]
             pot_arr[stime.index(i["stime"]), :, :] = i["pot"]["pot_arr"]
         if "vel" in pev_params or "efield" in pev_params:
             L = len(i["vel_efield"]["mlats"])
@@ -597,6 +607,7 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
     if "pot" in pev_params: 
         crds["fparam.lat_pot"] = (["fparam.pot_x","fparam.pot_y"], lat_cntr.astype(int))
         crds["fparam.lon_pot"] = (["fparam.pot_x","fparam.pot_y"], lon_cntr.astype(int))
+        crds["fparam.mlt_pot"] = (["fparam.pot_x","fparam.pot_y"], mlt_cntr.astype(float))
         var["fparam.pot_arr"] = (["fparam.time", "fparam.pot_x","fparam.pot_y"], pot_arr)
     if "vel" in pev_params or "efield" in pev_params:
         crds["max_efield_vel_len"] = ("fparam.max_ev_len", range(max_ev_len))
@@ -620,6 +631,7 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
     atrs["fparam.etime"] = "end time [datetime]"
     atrs["fparam.lat_pot"] = "magnetic latitudes [degrees; for fitted potentials]"
     atrs["fparam.lon_pot"] = "magnetic longitudes [degrees; for fitted potentials]"
+    atrs["fparam.mlt_pot"] = "magnetic local time [for fitted potentials]"
     atrs["fparam.pot_arr"] = "fitted potential [kV]"            
     atrs["fparam.n_rads"] = "number of radar station"            
     atrs["fparam.n_vecs"] = "number of associated data vectors"            

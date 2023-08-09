@@ -73,6 +73,7 @@ def read_nc_files(fname, time):
     ]
     date_index = stime.index(time)
     pot_arr = d.variables["fparam.pot_arr"][date_index,:,:]
+    print(np.min(pot_arr), np.max(pot_arr), np.max(pot_arr)-np.min(pot_arr))
     mlat = d.variables["fparam.lat_pot"][:]
     mlon = d.variables["fparam.lon_pot"][:]
     o = pd.DataFrame()
