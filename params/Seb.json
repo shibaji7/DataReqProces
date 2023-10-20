@@ -1,0 +1,27 @@
+{
+    "__comments__": "Data to Sebastijan",
+    "data_type": "map2",
+    "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
+    "start_date": null,
+    "end_date": null,
+    "dates": [
+        "2014-03-22", "2014-03-23", "2014-03-24",
+        "2014-03-25", "2014-03-26", "2014-03-27",
+        "2014-03-28", "2014-03-29",
+        "2017-09-04", "2017-09-05", "2017-09-06",
+        "2017-09-07", "2017-09-08", "2017-09-09",
+        "2017-09-10"
+    ],
+    "hemis": ["north"],
+    "scalers": ["pot.drop"],
+    "vectors": [],
+    "pev_params": ["pot", "efield", "vel"],
+    "grid_params": {
+    },
+    "file_name_format": "{dn}.{hemi}.nc",
+    "cores": 24,
+    "pot_lat_min": 40,
+    "med_filt": {
+        "thresh": null
+    }
+}

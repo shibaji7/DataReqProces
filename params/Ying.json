@@ -1,0 +1,20 @@
+{
+    "__comments__": "",
+    "data_type": "map2",
+    "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
+    "start_date": null,
+    "end_date": null,
+    "dates": ["2015-03-17", "2015-06-23", "2011-08-05"],
+    "hemis": ["north"],
+    "scalers": [],
+    "vectors": [],
+    "pev_params": ["pot", "efield", "vel"],
+    "grid_params": {
+    },
+    "file_name_format": "{dn}.{hemi}.nc",
+    "cores": 24,
+    "pot_lat_min": 30,
+    "med_filt": {
+        "thresh": null
+    }
+}

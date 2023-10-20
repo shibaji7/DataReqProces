@@ -29,10 +29,11 @@ def load_param_json(param_file_name):
     if o["end_date"] is not None: o["end_date"] = prs.parse(o["end_date"])
     if (o["dates"] is not None) and (len(o["dates"]) > 0): o["dates"] = [prs.parse(d) for d in o["dates"]]
         
-    if (o["end_date"]-o["start_date"]).total_seconds()/(24*3600) >= 1:
-        t = int((o["end_date"]-o["start_date"]).total_seconds()/(24*3600))
-        o["dates"] = [o["start_date"]+dt.timedelta(d) for d in range(t)]
-        o["start_date"], o["end_date"] = None, None
+    if (o["start_date"] is not None) and (o["end_date"] is not None):
+        if (o["end_date"]-o["start_date"]).total_seconds()/(24*3600) >= 1:
+            t = int((o["end_date"]-o["start_date"]).total_seconds()/(24*3600))
+            o["dates"] = [o["start_date"]+dt.timedelta(d) for d in range(t)]
+            o["start_date"], o["end_date"] = None, None
     
     # Set save file type
     if ".nc" in o["file_name_format"]: o["save_type"] = "netCDF4"
