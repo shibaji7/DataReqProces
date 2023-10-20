@@ -1,4 +1,4 @@
-name: uah
+name: datareq
 channels:
   - anaconda
   - conda-forge
