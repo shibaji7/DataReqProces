@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--rad", default="gbr", help="Radar code", type=str)
     parser.add_argument("-f", "--file_type", default=None, help="File type other than fitacf or map2", type=str)
     parser.add_argument("-pm", "--param_file_name", default="Lei", help="Parameter file name", type=str)
-    parser.add_argument("-tmp", "--tmp_folder", default="tmp/", help="Local folder to save files", type=str)
+    parser.add_argument("-tmp", "--tmp_folder", default="/home/shibaji/OneDrive/SuperDARN-Data-Share/", help="Local folder to save files", type=str)
     args = parser.parse_args()
     o = load_param_json(args.param_file_name)
     args.file_type = o["data_type"] if args.file_type is None else args.file_type

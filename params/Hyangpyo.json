@@ -1,0 +1,22 @@
+{
+    "__comments__": "Data to Heikki",
+    "data_type": "map2",
+    "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
+    "start_date": null,
+    "end_date": null,
+    "dates": [
+        "2014-02-27"
+    ],
+    "hemis": ["north", "south"],
+    "scalers": ["pot.drop"],
+    "vectors": [],
+    "pev_params": ["pot", "efield", "vel"],
+    "grid_params": {
+    },
+    "file_name_format": "{dn}.{hemi}.nc",
+    "cores": 48,
+    "pot_lat_min": 40,
+    "med_filt": {
+        "thresh": null
+    }
+}
