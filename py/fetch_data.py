@@ -25,10 +25,16 @@ import pandas as pd
 
 import json
 
+def check_folders(args):
+    args.tmp_folder_store = args.tmp_folder_store.format(user=args.param_file_name)
+    if not os.path.exists(args.tmp_folder_store): os.system("mkdir -p " + args.tmp_folder_store)
+    args.tmp_folder_check = args.tmp_folder_check.format(user=args.param_file_name)
+    if not os.path.exists(args.tmp_folder_check): os.system("mkdir -p " + args.tmp_folder_check)
+    return args
+
 def fetch_fit_level_data(args):
-    args.tmp_folder = args.tmp_folder + args.param_file_name + "/"
-    if not os.path.exists(args.tmp_folder): os.system("mkdir -p " + args.tmp_folder)
-    fname = args.tmp_folder + args.file_name_format.format(rad=args.rad, start=args.start_date.strftime("%Y%m%d%H%M"),\
+    args = check_folders(args)
+    fname = args.tmp_folder_store + args.file_name_format.format(rad=args.rad, start=args.start_date.strftime("%Y%m%d%H%M"),\
             end=args.end_date.strftime("%Y%m%d%H%M"))
     if not os.path.exists(fname):
         fdata = FetchData( args.rad, [args.start_date, args.end_date], args.file_type )
@@ -59,8 +65,7 @@ def fetch_fit_level_data(args):
     return
 
 def fetch_map_level_data(args):
-    args.tmp_folder = args.tmp_folder + args.param_file_name + "/"
-    if not os.path.exists(args.tmp_folder): os.system("mkdir -p " + args.tmp_folder)
+    args = check_folders(args)
     dates = args.dates
     if len(dates) == 0:
         dn = args.start_date
@@ -78,12 +83,22 @@ def fetch_map_level_data(args):
                 else: print(f" Wrong type found {args.file_type}!")
                 start = d if args.start_date is None else args.start_date 
                 end = d+dt.timedelta(1) if args.end_date is None else args.end_date 
-                if args.start_date is None: fname = args.tmp_folder + args.file_name_format.format(hemi=hemi,                                                                                               dn=start.strftime("%Y%m%d"))
-                else: fname = args.tmp_folder + args.file_name_format.format(hemi=hemi, 
-                                                                             dn=start.strftime("%Y%m%d.%H%M-")+\
-                                                                             end.strftime("%H%M"))
-                print(f" File stores - \n\t{fname}")
-                if not os.path.exists(fname):
+                if args.start_date is None: 
+                    fname_store = args.tmp_folder_store + args.file_name_format.format(
+                        hemi=hemi, dn=start.strftime("%Y%m%d")
+                    )
+                    fname_check = args.tmp_folder_check + args.file_name_format.format(
+                        hemi=hemi, dn=start.strftime("%Y%m%d")
+                    )
+                else: 
+                    fname_store = args.tmp_folder_store + args.file_name_format.format(
+                        hemi=hemi, dn=start.strftime("%Y%m%d.%H%M-")+end.strftime("%H%M")
+                    )
+                    fname_check = args.tmp_folder_check + + args.file_name_format.format(
+                        hemi=hemi, dn=start.strftime("%Y%m%d.%H%M-")+end.strftime("%H%M")
+                    )
+                print(f" File stores - \n\t{fname_store} \n\t{fname_check}")
+                if (not os.path.exists(fname_store)) and (not os.path.exists(fname_check)):
                     obj = dict()
                     if len(args.scalers)+len(args.vectors) > 0: obj["sv_o"] = fm.get_maps(start, end, 
                                                                                           args.scalers,
@@ -95,9 +110,9 @@ def fetch_map_level_data(args):
                                                                                args.cores, args.pev_params, 
                                                                                args.plots)
                     ds = to_xarray(obj, args.pev_params, args.scalers, args.vectors, args.grid_params)
-                    ds.to_netcdf(fname)
-                    if ".csv" in fname:
-                        to_csv(fname, obj, args.pev_params)
+                    ds.to_netcdf(fname_store)
+                    if ".csv" in fname_store:
+                        to_csv(fname_store, obj, args.pev_params)
                     os.system("rm -rf raw/*")
             except:
                 print(f" Exception occured - {d}")
