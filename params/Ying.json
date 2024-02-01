@@ -4,7 +4,7 @@
     "filestr": "/sd-data/{year}/{file_type}/{hemi}/{date}.{hemi}*.bz2",
     "start_date": null,
     "end_date": null,
-    "dates": ["2015-03-17", "2015-06-23", "2011-08-05"],
+    "dates": ["2023-11-05"],
     "hemis": ["north"],
     "scalers": [],
     "vectors": [],
