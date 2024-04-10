@@ -94,7 +94,7 @@ def fetch_map_level_data(args):
                     fname_store = args.tmp_folder_store + args.file_name_format.format(
                         hemi=hemi, dn=start.strftime("%Y%m%d.%H%M-")+end.strftime("%H%M")
                     )
-                    fname_check = args.tmp_folder_check + + args.file_name_format.format(
+                    fname_check = args.tmp_folder_check + args.file_name_format.format(
                         hemi=hemi, dn=start.strftime("%Y%m%d.%H%M-")+end.strftime("%H%M")
                     )
                 print(f" File stores - \n\t{fname_store} \n\t{fname_check}")
@@ -115,6 +115,8 @@ def fetch_map_level_data(args):
                         to_csv(fname_store, obj, args.pev_params)
                     os.system("rm -rf raw/*")
             except:
+                import traceback
+                traceback.print_exc()
                 print(f" Exception occured - {d}")
             gc.collect()
     return
