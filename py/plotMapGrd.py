@@ -70,7 +70,7 @@ class MapPlot(object):
         """
         proj = cartopy.crs.NorthPolarStereo() if self.hemi == "north" else cartopy.crs.SouthPolarStereo()
         
-        self.fig = plt.figure(dpi=300, figsize=(3,3))
+        self.fig = plt.figure(dpi=300, figsize=(4,4))
         self.ax = self.fig.add_subplot(111, projection="sdcarto", map_projection = proj,
                                   coords=self.rec["coords"], plot_date=self.rec["stime"])
         self.ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
