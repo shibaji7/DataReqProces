@@ -7,7 +7,7 @@
     "dates": [
         "2001-01-02", "2001-01-03", "2001-06-01", "2001-06-02"
     ],
-    "hemis": ["north"],
+    "hemis": ["north", "south"],
     "scalers": ["pot.drop"],
     "vectors": [],
     "pev_params": [],
