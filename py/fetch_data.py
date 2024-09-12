@@ -59,8 +59,9 @@ def fetch_fit_level_data(args):
                 o = fdata.convert_to_pandas(beams, s_params=args.scalers, v_params=args.vectors)
                 o = futils.update_geo_location(args.rad, o)
                 o.to_csv(fname, header=True, index=False, float_format="%g")
-            elif args.save_type=="netCDE4":
+            elif args.save_type=="netCDF4":
                 ds = fdata.to_xarray(scans)
+                ds.to_netcdf(fname)
         else: print(" Error - Data not found")
     return
 

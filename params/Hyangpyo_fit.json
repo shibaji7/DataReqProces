@@ -1,0 +1,20 @@
+{
+    "data_type": "fitacf",
+    "filestr": "/sd-data/{year}/{file_type}/{rad}/{date}*.{rad}.{file_type}*.bz2",
+    "rad": "kap",
+    "start_date": "2015-03-25",
+    "end_date": "2015-03-26",
+    "dates": [],
+    "hemis": [],
+    "scalers": ["time", "bmnum", "noise.sky", "nrang", "tfreq", "scan"],
+    "vectors": ["p_l", "slist", "v", "w_l", "gflg"],
+    "pev_params": [],
+    "grid_params": {
+        "summary": [],
+        "records": [],
+        "records_map": []
+    },
+    "file_name_format": "{rad}_{start}_{end}.csv",
+    "cores": 24,
+    "save_type": "pandas"
+}
