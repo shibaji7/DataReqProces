@@ -14,6 +14,7 @@ __status__ = "Research"
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import scienceplots
 plt.style.use(["science", "ieee"])
 import matplotlib as mpl
 from matplotlib import cm

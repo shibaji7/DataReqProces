@@ -20,7 +20,6 @@ import glob
 import bz2
 import gzip
 import pydarn
-import pydarnio
 import configparser
 import shutil
 import xarray
@@ -93,7 +92,7 @@ class FetchMap(object):
                     recs = reader.read_dmap(f)
                 else:
                     with bz2.open(f) as fp: ds = fp.read()
-                    reader = pydarnio.SDarnRead(ds, True)
+                    reader = pydarn.SuperDARNRead(ds, True)
                     recs = reader.read_map()
                 self.records.extend(recs)
             if self.file_type == "cnvmap": os.system("rm -rf raw/*")
