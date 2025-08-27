@@ -177,7 +177,6 @@ dependencies:
     - networkx==2.6.3
     - numexpr==2.7.3
     - pathlib2==2.3.6
-    - pydarn==2.2
-    - pydarnio==1.1.0
+    - pydarn==4.0
     - spacepy==0.2.3
     - tables==3.6.1
