@@ -487,7 +487,7 @@ class FetchMap(object):
         records = self.fetch_records()
         hemi = 1 if self.hemi=="north" else -1
         hemi_str = self.hemi
-        for r in records:
+        for j, r in enumerate(records):
             stime = dt.datetime(r["start.year"], r["start.month"], r["start.day"], r["start.hour"],
                                 r["start.minute"], int(r["start.second"]))
             etime = dt.datetime(r["end.year"], r["end.month"], r["end.day"], r["end.hour"],
@@ -497,7 +497,8 @@ class FetchMap(object):
             else:
                 if (stime >= start) and (etime <= end):
                     record_list.append({"stime":stime, "etime": etime, "rec":r, "hemi": hemi, 
-                                        "hemi_str": hemi_str})                
+                                        "hemi_str": hemi_str})
+            # if j==2: break               
         o = []
         p0 = mp.Pool(cores)
         partial_filter = partial(self.proc, pot_lat_min=pot_lat_min, pev_params=pev_params,plots=plots)
@@ -574,16 +575,21 @@ def to_xarray_pev(o, pev_params, var, crds, atrs):
     etime.sort()
     
     if "pot" in pev_params:
-        pot_arr, lat_cntr, lon_cntr = np.zeros((len(stime), pot_arr_shape[0], pot_arr_shape[1])), None, None
+        pot_arr, lat_cntr, lon_cntr, mlt_cntr = np.zeros((len(stime), pot_arr_shape[0], pot_arr_shape[1])), None, None, None
     if "vel" in pev_params or "efield" in pev_params:
         mlons, mlats = np.zeros((len(stime), max_ev_len))*np.nan, np.zeros((len(stime), max_ev_len))*np.nan
         if "vel" in pev_params: vel_mag, vel_azm = np.zeros((len(stime), max_ev_len))*np.nan,\
                     np.zeros((len(stime), max_ev_len))*np.nan
         if "efield" in pev_params: efield_fit = np.zeros((len(stime), 2, max_ev_len))
+    fetch_not_nans = True
     for j, i in enumerate(o):
         if "pot" in pev_params:
-            if j == 0: lat_cntr, lon_cntr, mlt_cntr = i["pot"]["lat_cntr"], i["pot"]["lon_cntr"], i["pot"]["mlt_cntr"]
+            if fetch_not_nans and (lat_cntr is None): 
+                if not np.all(np.isnan(i["pot"]["lat_cntr"])):
+                    fetch_not_nans = False
+                    lat_cntr, lon_cntr, mlt_cntr = i["pot"]["lat_cntr"], i["pot"]["lon_cntr"], i["pot"]["mlt_cntr"]
             pot_arr[stime.index(i["stime"]), :, :] = i["pot"]["pot_arr"]
+            print(lat_cntr, lon_cntr, mlt_cntr, i["pot"]["pot_arr"])
         if "vel" in pev_params or "efield" in pev_params:
             L = len(i["vel_efield"]["mlats"])
             mlats[stime.index(i["stime"]), :L] = i["vel_efield"]["mlats"]

@@ -98,7 +98,6 @@ def fetch_map_level_data(args):
                     fname_check = args.tmp_folder_check + args.file_name_format.format(
                         hemi=hemi, dn=start.strftime("%Y%m%d.%H%M-")+end.strftime("%H%M")
                     )
-                print(f" File stores - \n\t{fname_store} \n\t{fname_check}")
                 if (not os.path.exists(fname_store)) and (not os.path.exists(fname_check)):
                     obj = dict()
                     if len(args.scalers)+len(args.vectors) > 0: obj["sv_o"] = fm.get_maps(start, end, 
